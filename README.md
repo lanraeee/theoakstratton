@@ -139,6 +139,39 @@ Customize email templates in `server.js`:
 
 ## Deployment
 
+### Railway.com (Recommended ⭐)
+
+1. **Create Railway Account**
+   - Go to [railway.app](https://railway.app)
+   - Sign in with GitHub
+
+2. **Deploy from GitHub**
+   - Click "New Project"
+   - Select "Deploy from GitHub repo"
+   - Connect to your `theoakstratton` repository
+   - Railway auto-detects Node.js and deploys
+
+3. **Set Environment Variables**
+   - In Railway dashboard, go to your project
+   - Click "Variables" tab
+   - Add these variables:
+     ```
+     SMTP_HOST=smtp.gmail.com
+     SMTP_PORT=587
+     SMTP_SECURE=false
+     SMTP_USER=your-email@gmail.com
+     SMTP_PASS=your-app-password
+     ADMIN_EMAIL=fawaz@belloite.com
+     NODE_ENV=production
+     ```
+
+4. **Get Your Domain**
+   - Railway auto-generates a domain (e.g., `yourapp.railway.app`)
+   - Or connect your custom domain in Railway settings
+   - Your app is live! 🚀
+
+**Pro Tip:** Railway redeploys automatically when you push to `main` or your deployment branch.
+
 ### Heroku
 ```bash
 heroku create your-app-name

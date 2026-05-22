@@ -7,6 +7,10 @@ function scrollToContact() {
     document.getElementById('contact').scrollIntoView({ behavior: 'smooth' });
 }
 
+function scrollToPayment() {
+    document.getElementById('payment').scrollIntoView({ behavior: 'smooth' });
+}
+
 // Contact form submission
 const contactForm = document.getElementById('contactForm');
 if (contactForm) {

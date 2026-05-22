@@ -1,5 +1,5 @@
 // Initialize Stripe
-const stripe = Stripe('REPLACE_WITH_STRIPE_PUBLISHABLE_KEY');
+const stripe = Stripe('pk_live_51SaGNIFzk1m5J4hxv6mugOeJ37bCRY3cxmP7qZsLVeaEHGG1UwK6Z5rHjvQDSV9UllMOVj8fliDCtzaWTocTNpj800dfbiGdXn');
 let elements;
 let cardElement;
 

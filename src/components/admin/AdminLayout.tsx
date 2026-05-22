@@ -16,8 +16,11 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   const navItems = [
     { label: 'Dashboard', icon: '📊', path: '/admin/dashboard' },
     { label: 'Leads', icon: '👥', path: '/admin/leads' },
+    { label: 'Waitlist', icon: '⏳', path: '/admin/waitlist' },
     { label: 'Templates', icon: '📧', path: '/admin/templates' },
+    { label: 'Email Tracking', icon: '📬', path: '/admin/email-tracking' },
     { label: 'Analytics', icon: '📈', path: '/admin/analytics' },
+    { label: 'Settings', icon: '⚙️', path: '/admin/settings' },
   ]
 
   const isActive = (path: string) => location.pathname === path

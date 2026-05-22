@@ -11,6 +11,9 @@ import DashboardPage from './pages/Admin/DashboardPage'
 import LeadsPage from './pages/Admin/LeadsPage'
 import TemplatesPage from './pages/Admin/TemplatesPage'
 import AnalyticsPage from './pages/Admin/AnalyticsPage'
+import WaitlistPage from './pages/Admin/WaitlistPage'
+import EmailTrackingPage from './pages/Admin/EmailTrackingPage'
+import SettingsPage from './pages/Admin/SettingsPage'
 import NotFoundPage from './pages/NotFound'
 
 function App() {
@@ -54,6 +57,30 @@ function App() {
               element={
                 <ProtectedRoute>
                   <AnalyticsPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/waitlist"
+              element={
+                <ProtectedRoute>
+                  <WaitlistPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/email-tracking"
+              element={
+                <ProtectedRoute>
+                  <EmailTrackingPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/settings"
+              element={
+                <ProtectedRoute>
+                  <SettingsPage />
                 </ProtectedRoute>
               }
             />

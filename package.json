@@ -10,6 +10,7 @@
     "client:dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
+    "build:prod": "npm run build && node server.js",
     "start": "node server.js",
     "lint": "eslint src --ext .ts,.tsx",
     "type-check": "tsc --noEmit"

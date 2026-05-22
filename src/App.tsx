@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { AuthProvider } from './contexts/AuthContext'
 import { AlertProvider } from './contexts/AlertContext'
 import ProtectedRoute from './components/common/ProtectedRoute'
+import AlertNotifications from './components/common/AlertNotifications'
 
 // Pages
 import LandingPage from './pages/Landing'
@@ -17,6 +18,7 @@ function App() {
     <Router>
       <AuthProvider>
         <AlertProvider>
+          <AlertNotifications />
           <Routes>
             {/* Public Routes */}
             <Route path="/" element={<LandingPage />} />

@@ -14,6 +14,7 @@ import AnalyticsPage from './pages/Admin/AnalyticsPage'
 import WaitlistPage from './pages/Admin/WaitlistPage'
 import EmailTrackingPage from './pages/Admin/EmailTrackingPage'
 import SettingsPage from './pages/Admin/SettingsPage'
+import ReportingPage from './pages/Admin/ReportingPage'
 import NotFoundPage from './pages/NotFound'
 
 function App() {
@@ -81,6 +82,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <SettingsPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/reporting"
+              element={
+                <ProtectedRoute>
+                  <ReportingPage />
                 </ProtectedRoute>
               }
             />

@@ -20,6 +20,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     { label: 'Templates', icon: '📧', path: '/admin/templates' },
     { label: 'Email Tracking', icon: '📬', path: '/admin/email-tracking' },
     { label: 'Analytics', icon: '📈', path: '/admin/analytics' },
+    { label: 'Reporting', icon: '📑', path: '/admin/reporting' },
     { label: 'Settings', icon: '⚙️', path: '/admin/settings' },
   ]
 

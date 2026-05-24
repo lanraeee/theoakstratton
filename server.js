@@ -57,6 +57,8 @@ app.use(bodyParser.json({ limit: '10kb' }))
 app.use(bodyParser.urlencoded({ extended: true, limit: '10kb' }))
 
 // Serve static files (React build)
+import fs from 'fs'
+
 const distPath = path.join(__dirname, 'dist')
 const publicPath = path.join(__dirname, 'public')
 
@@ -66,7 +68,6 @@ console.log(`   - public path: ${publicPath}`)
 
 // Check if dist exists
 try {
-  const fs = require('fs')
   const distExists = fs.existsSync(distPath)
   const publicExists = fs.existsSync(publicPath)
   console.log(`   - dist exists: ${distExists}`)

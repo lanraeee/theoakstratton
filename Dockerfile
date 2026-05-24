@@ -3,6 +3,10 @@ FROM node:18-alpine as builder
 
 WORKDIR /app
 
+# Set build-time environment variables
+# These are used by Vite during the build process
+ENV VITE_API_URL=https://theoakstratton.up.railway.app
+
 # Copy package files
 COPY package*.json ./
 
@@ -13,7 +17,7 @@ RUN npm ci
 COPY . .
 
 # Build React frontend with verbose output
-RUN echo "Building React frontend..." && npm run build && echo "Build complete" && ls -la dist/
+RUN echo "Building React frontend..." && VITE_API_URL=https://theoakstratton.up.railway.app npm run build && echo "Build complete" && ls -la dist/
 
 # Production stage
 FROM node:18-alpine

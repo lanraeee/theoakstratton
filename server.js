@@ -118,14 +118,24 @@ const transporter = nodemailer.createTransport({
   },
 })
 
-transporter.verify((error, success) => {
-  if (error) {
-    console.error('SMTP Configuration Error:', error)
-    console.warn('⚠️  Email functionality may not work. Check your SMTP credentials.')
-  } else if (success) {
-    console.log('✓ SMTP connection successful. Email services ready.')
-  }
-})
+// Verify SMTP asynchronously without blocking startup
+// Set a timeout to prevent hanging
+if (process.env.SMTP_USER) {
+  const smtpVerifyTimeout = setTimeout(() => {
+    console.warn('⚠️  SMTP verification timeout. Email services may not work.')
+  }, 3000)
+
+  transporter.verify((error, success) => {
+    clearTimeout(smtpVerifyTimeout)
+    if (error) {
+      console.warn('⚠️  SMTP Configuration Error. Email functionality may not work.')
+    } else if (success) {
+      console.log('✓ SMTP connection successful. Email services ready.')
+    }
+  })
+} else {
+  console.log('ℹ️  SMTP not configured. Email functionality disabled.')
+}
 
 // ============================================================================
 // AUTHENTICATION MIDDLEWARE

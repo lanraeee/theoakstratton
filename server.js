@@ -513,3 +513,4 @@ app.listen(PORT, () => {
   console.log(`🌐 CORS Origin: ${process.env.CORS_ORIGIN || 'All origins'}`)
   console.log(`📦 Environment: ${process.env.NODE_ENV || 'development'}\n`)
 })
+// Deployment trigger at Sun May 24 16:40:46 UTC 2026

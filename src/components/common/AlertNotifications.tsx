@@ -1,8 +1,8 @@
 import { motion, AnimatePresence } from 'framer-motion'
-import { useAlert } from '@/contexts/AlertContext'
+import { useAlertNotifications } from '@/contexts/AlertContext'
 
 export default function AlertNotifications() {
-  const { alerts, removeAlert } = useAlert()
+  const { alerts, removeAlert } = useAlertNotifications()
 
   const getAlertStyles = (type: string) => {
     const styles = {

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ScatterChart, Scatter, PieChart, Pie, Cell } from 'recharts'
+import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
 import AdminLayout from '@/components/admin/AdminLayout'
 import { useAlert } from '@/contexts/AlertContext'
 
@@ -275,7 +275,13 @@ export default function ReportingPage() {
                         {cohort.day14} <span className="text-xs text-gray-500">({((cohort.day14 / cohort.day0) * 100).toFixed(0)}%)</span>
                       </td>
                       <td className="px-4 py-3 text-center bg-blue-50 rounded">
-                        {cohort.day21} <span className="text-xs text-gray-500">({((cohort.day21 / cohort.day0) * 100).toFixed(0)}%)</span>
+                        {cohort.day21 ? (
+                          <>
+                            {cohort.day21} <span className="text-xs text-gray-500">({((cohort.day21 / cohort.day0) * 100).toFixed(0)}%)</span>
+                          </>
+                        ) : (
+                          '-'
+                        )}
                       </td>
                       <td className="px-4 py-3 text-center bg-blue-50 rounded">
                         {cohort.day28 ? (

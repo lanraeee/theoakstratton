@@ -17,7 +17,7 @@ interface AlertContextType {
   clearAlerts: () => void
 }
 
-const AlertContext = createContext<AlertContextType | undefined>(undefined)
+export const AlertContext = createContext<AlertContextType | undefined>(undefined)
 
 export function AlertProvider({ children }: { children: ReactNode }) {
   const [alerts, setAlerts] = useState<Alert[]>([])
@@ -64,6 +64,28 @@ export function useAlert() {
   }
 
   return {
+    success: (message: string, title?: string) =>
+      context.addAlert({ type: 'success', message, title }),
+    error: (message: string, title?: string) =>
+      context.addAlert({ type: 'error', message, title }),
+    warning: (message: string, title?: string) =>
+      context.addAlert({ type: 'warning', message, title }),
+    info: (message: string, title?: string) =>
+      context.addAlert({ type: 'info', message, title }),
+    remove: context.removeAlert,
+    clear: context.clearAlerts,
+  }
+}
+
+export function useAlertNotifications() {
+  const context = useContext(AlertContext)
+  if (context === undefined) {
+    throw new Error('useAlertNotifications must be used within an AlertProvider')
+  }
+
+  return {
+    alerts: context.alerts,
+    removeAlert: context.removeAlert,
     success: (message: string, title?: string) =>
       context.addAlert({ type: 'success', message, title }),
     error: (message: string, title?: string) =>

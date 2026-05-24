@@ -30,6 +30,19 @@ const pool = new pg.Pool({
   connectionString: process.env.DATABASE_URL,
 })
 
+// Initialize database schema on startup
+async function initializeDatabase() {
+  try {
+    const schemaPath = path.join(__dirname, 'database', 'schema.sql')
+    const schema = await fsPromises.readFile(schemaPath, 'utf-8')
+
+    await pool.query(schema)
+    console.log('✓ Database schema initialized successfully')
+  } catch (error) {
+    console.warn('⚠️  Database schema initialization error:', error.message)
+  }
+}
+
 // Test database connection
 pool.query('SELECT NOW()', (err, res) => {
   if (err) {
@@ -37,6 +50,7 @@ pool.query('SELECT NOW()', (err, res) => {
     console.warn('⚠️  Database not configured. Running in fallback mode with SQLite.')
   } else {
     console.log('✓ PostgreSQL connection successful')
+    initializeDatabase()
   }
 })
 
@@ -58,6 +72,7 @@ app.use(bodyParser.urlencoded({ extended: true, limit: '10kb' }))
 
 // Serve static files (React build)
 import fs from 'fs'
+import { promises as fsPromises } from 'fs'
 
 const distPath = path.join(__dirname, 'dist')
 const publicPath = path.join(__dirname, 'public')

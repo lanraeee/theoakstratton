@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
 import AdminLayout from '@/components/admin/AdminLayout'
 import api from '@/services/api'
 
@@ -29,13 +29,11 @@ export default function DashboardPage() {
     conversionRate: '24%',
     revenue: '£12,450',
   })
-  const [loading, setLoading] = useState(false)
 
   useEffect(() => {
     // Fetch dashboard stats
     const fetchStats = async () => {
       try {
-        setLoading(true)
         const response = await api.get('/api/admin/dashboard')
         // Map response to stats
         setStats({
@@ -48,8 +46,6 @@ export default function DashboardPage() {
         })
       } catch (error) {
         console.error('Failed to fetch dashboard stats:', error)
-      } finally {
-        setLoading(false)
       }
     }
 

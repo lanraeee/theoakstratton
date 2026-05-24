@@ -43,16 +43,19 @@ export default function Footer() {
             >
               <h4 className="font-semibold text-white mb-4">{section[0]}</h4>
               <ul className="space-y-2">
-                {section[1].map((link, lidx) => (
-                  <li key={lidx}>
-                    <a
-                      href="#"
-                      className="text-sm text-gray-400 hover:text-primary-400 transition-colors"
-                    >
-                      {link}
-                    </a>
-                  </li>
-                ))}
+                {section[1].map((link, lidx) => {
+                  const linkText = typeof link === 'string' ? link : link.name
+                  return (
+                    <li key={lidx}>
+                      <a
+                        href="#"
+                        className="text-sm text-gray-400 hover:text-primary-400 transition-colors"
+                      >
+                        {linkText}
+                      </a>
+                    </li>
+                  )
+                })}
               </ul>
             </motion.div>
           ))}

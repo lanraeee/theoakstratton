@@ -700,7 +700,7 @@ app.post('/api/checkout/create-session', formLimiter, async (req, res) => {
         const orderNumber = `ORD-${Date.now()}`
 
         const session = await stripeClient.checkout.sessions.create({
-          payment_method_types: ['card'],
+          payment_method_types: ['card', 'klarna', 'afterpay_clearpay', 'paypal'],
           line_items: [
             {
               price_data: {
@@ -732,7 +732,7 @@ app.post('/api/checkout/create-session', formLimiter, async (req, res) => {
       const orderNumber = `ORD-${Date.now()}`
 
       const session = await stripeClient.checkout.sessions.create({
-        payment_method_types: ['card'],
+        payment_method_types: ['card', 'klarna', 'afterpay_clearpay', 'paypal'],
         line_items: [
           {
             price_data: {

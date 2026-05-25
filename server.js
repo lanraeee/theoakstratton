@@ -42,10 +42,48 @@ async function initializeDatabase() {
     await pool.query(schema)
     console.log('✓ Database schema initialized successfully')
 
-    // Seed default admin user
+    // Run migrations to fix existing databases
+    await runMigrations()
+
+    // Seed default data
     await seedDefaultAdmin()
+    await seedDefaultPlans()
   } catch (error) {
     console.warn('⚠️  Database schema initialization error:', error.message)
+  }
+}
+
+// Run database migrations
+async function runMigrations() {
+  try {
+    const migrationsPath = path.join(__dirname, 'database', 'migrations.sql')
+    const migrations = await fsPromises.readFile(migrationsPath, 'utf-8')
+
+    await pool.query(migrations)
+    console.log('✓ Database migrations completed successfully')
+  } catch (error) {
+    console.warn('⚠️  Database migrations error:', error.message)
+  }
+}
+
+// Seed default pricing plans
+async function seedDefaultPlans() {
+  try {
+    const plans = [
+      { id: 'starter', name: 'Starter', description: 'Perfect for small businesses', price_gbp: 29900, features: ['Basic BNPL', 'Up to 100 customers', 'Email support'], display_order: 1 },
+      { id: 'growth', name: 'Growth', description: 'For growing companies', price_gbp: 79900, features: ['Advanced BNPL', 'Up to 1000 customers', 'Priority support', 'Analytics'], display_order: 2 },
+      { id: 'premium', name: 'Premium', description: 'Enterprise solution', price_gbp: 199900, features: ['Full BNPL Suite', 'Unlimited customers', '24/7 support', 'Custom integrations'], display_order: 3 },
+    ]
+
+    for (const plan of plans) {
+      await pool.query(
+        'INSERT INTO pricing_plans (id, name, description, price_gbp, features, display_order, is_active) VALUES ($1, $2, $3, $4, $5, $6, $7) ON CONFLICT (id) DO NOTHING',
+        [plan.id, plan.name, plan.description, plan.price_gbp, JSON.stringify(plan.features), plan.display_order, true]
+      )
+    }
+    console.log('✓ Default pricing plans seeded successfully')
+  } catch (error) {
+    console.warn('⚠️  Error seeding pricing plans:', error.message)
   }
 }
 

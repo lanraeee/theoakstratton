@@ -6,10 +6,14 @@ CREATE TABLE IF NOT EXISTS users (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   email VARCHAR(254) UNIQUE NOT NULL,
   password_hash VARCHAR(255) NOT NULL,
-  role VARCHAR(50) DEFAULT 'manager' CHECK (role IN ('admin', 'manager')),
+  first_name VARCHAR(100),
+  last_name VARCHAR(100),
+  role VARCHAR(50) DEFAULT 'manager' CHECK (role IN ('admin', 'manager', 'superadmin')),
+  is_superadmin BOOLEAN DEFAULT false,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   last_login TIMESTAMP,
+  password_changed_at TIMESTAMP,
   is_active BOOLEAN DEFAULT true
 );
 
@@ -99,8 +103,77 @@ CREATE TABLE IF NOT EXISTS transactions (
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Landing content management
+CREATE TABLE IF NOT EXISTS landing_content (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  section_name VARCHAR(100) NOT NULL,
+  section_key VARCHAR(255) NOT NULL UNIQUE,
+  content_type VARCHAR(50) CHECK (content_type IN ('text', 'json', 'html', 'image_url')) DEFAULT 'text',
+  content_value TEXT,
+  updated_by UUID REFERENCES users(id) ON DELETE SET NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  version INT DEFAULT 1
+);
+
+-- Pricing plans for Stripe integration
+CREATE TABLE IF NOT EXISTS pricing_plans (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name VARCHAR(100) NOT NULL,
+  description TEXT,
+  price_gbp INTEGER NOT NULL,
+  recurring BOOLEAN DEFAULT false,
+  stripe_product_id VARCHAR(255),
+  stripe_price_id VARCHAR(255),
+  features JSONB DEFAULT '[]'::jsonb,
+  display_order INT DEFAULT 0,
+  is_active BOOLEAN DEFAULT true,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Orders from Stripe payments
+CREATE TABLE IF NOT EXISTS orders (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  order_number VARCHAR(50) UNIQUE NOT NULL,
+  customer_email VARCHAR(254) NOT NULL,
+  customer_name VARCHAR(255),
+  plan_id UUID REFERENCES pricing_plans(id) ON DELETE SET NULL,
+  amount_gbp INTEGER NOT NULL,
+  currency VARCHAR(3) DEFAULT 'gbp',
+  stripe_session_id VARCHAR(255) UNIQUE,
+  stripe_payment_intent_id VARCHAR(255) UNIQUE,
+  stripe_customer_id VARCHAR(255),
+  status VARCHAR(50) DEFAULT 'pending' CHECK (
+    status IN ('pending', 'completed', 'failed', 'refunded', 'canceled')
+  ),
+  invoice_url TEXT,
+  receipt_url TEXT,
+  metadata JSONB,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Testimonials for landing page
+CREATE TABLE IF NOT EXISTS testimonials (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  quote TEXT NOT NULL,
+  author VARCHAR(255) NOT NULL,
+  role VARCHAR(255),
+  company VARCHAR(255),
+  rating INT CHECK (rating >= 1 AND rating <= 5),
+  image_url VARCHAR(500),
+  is_featured BOOLEAN DEFAULT false,
+  display_order INT DEFAULT 0,
+  is_active BOOLEAN DEFAULT true,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Create indexes for better query performance
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+CREATE INDEX IF NOT EXISTS idx_users_role ON users(role);
+CREATE INDEX IF NOT EXISTS idx_users_is_active ON users(is_active);
 CREATE INDEX IF NOT EXISTS idx_leads_email ON leads(email);
 CREATE INDEX IF NOT EXISTS idx_leads_source ON leads(source);
 CREATE INDEX IF NOT EXISTS idx_leads_status ON leads(status);
@@ -110,6 +183,13 @@ CREATE INDEX IF NOT EXISTS idx_email_events_lead_id ON email_events(lead_id);
 CREATE INDEX IF NOT EXISTS idx_analytics_events_created_at ON analytics_events(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_alerts_created_at ON alerts(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_transactions_status ON transactions(status);
+CREATE INDEX IF NOT EXISTS idx_landing_content_section_key ON landing_content(section_key);
+CREATE INDEX IF NOT EXISTS idx_pricing_plans_is_active ON pricing_plans(is_active);
+CREATE INDEX IF NOT EXISTS idx_orders_customer_email ON orders(customer_email);
+CREATE INDEX IF NOT EXISTS idx_orders_status ON orders(status);
+CREATE INDEX IF NOT EXISTS idx_orders_created_at ON orders(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_testimonials_is_active ON testimonials(is_active);
+CREATE INDEX IF NOT EXISTS idx_testimonials_featured ON testimonials(is_featured);
 
 -- Create views for common queries
 CREATE OR REPLACE VIEW dashboard_stats AS

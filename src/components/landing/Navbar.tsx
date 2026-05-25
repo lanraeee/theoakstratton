@@ -44,15 +44,6 @@ export default function Navbar() {
               {link.label}
             </motion.a>
           ))}
-
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => navigate('/admin/login')}
-            className="btn btn-primary"
-          >
-            Admin Login
-          </motion.button>
         </div>
 
         {/* Mobile Menu Button */}
@@ -83,15 +74,6 @@ export default function Navbar() {
                 {link.label}
               </a>
             ))}
-            <button
-              onClick={() => {
-                navigate('/admin/login')
-                setIsOpen(false)
-              }}
-              className="w-full btn btn-primary"
-            >
-              Admin Login
-            </button>
           </div>
         </motion.div>
       )}

@@ -6,6 +6,7 @@ import AlertNotifications from './components/common/AlertNotifications'
 
 // Pages
 import LandingPage from './pages/Landing'
+import CheckoutPage from './pages/CheckoutPage'
 import LoginPage from './pages/Admin/LoginPage'
 import DashboardPage from './pages/Admin/DashboardPage'
 import LeadsPage from './pages/Admin/LeadsPage'
@@ -15,6 +16,9 @@ import WaitlistPage from './pages/Admin/WaitlistPage'
 import EmailTrackingPage from './pages/Admin/EmailTrackingPage'
 import SettingsPage from './pages/Admin/SettingsPage'
 import ReportingPage from './pages/Admin/ReportingPage'
+import UserManagementPage from './pages/Admin/UserManagementPage'
+import ContentManagementPage from './pages/Admin/ContentManagementPage'
+import OrdersManagementPage from './pages/Admin/OrdersManagementPage'
 import NotFoundPage from './pages/NotFound'
 
 function App() {
@@ -26,6 +30,7 @@ function App() {
           <Routes>
             {/* Public Routes */}
             <Route path="/" element={<LandingPage />} />
+            <Route path="/checkout" element={<CheckoutPage />} />
             <Route path="/admin/login" element={<LoginPage />} />
 
             {/* Protected Admin Routes */}
@@ -34,6 +39,30 @@ function App() {
               element={
                 <ProtectedRoute>
                   <DashboardPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/users"
+              element={
+                <ProtectedRoute>
+                  <UserManagementPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/content"
+              element={
+                <ProtectedRoute>
+                  <ContentManagementPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/orders"
+              element={
+                <ProtectedRoute>
+                  <OrdersManagementPage />
                 </ProtectedRoute>
               }
             />

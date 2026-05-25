@@ -15,6 +15,9 @@ import WaitlistPage from './pages/Admin/WaitlistPage'
 import EmailTrackingPage from './pages/Admin/EmailTrackingPage'
 import SettingsPage from './pages/Admin/SettingsPage'
 import ReportingPage from './pages/Admin/ReportingPage'
+import UserManagementPage from './pages/Admin/UserManagementPage'
+import ContentManagementPage from './pages/Admin/ContentManagementPage'
+import OrdersManagementPage from './pages/Admin/OrdersManagementPage'
 import NotFoundPage from './pages/NotFound'
 
 function App() {
@@ -34,6 +37,30 @@ function App() {
               element={
                 <ProtectedRoute>
                   <DashboardPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/users"
+              element={
+                <ProtectedRoute>
+                  <UserManagementPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/content"
+              element={
+                <ProtectedRoute>
+                  <ContentManagementPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/orders"
+              element={
+                <ProtectedRoute>
+                  <OrdersManagementPage />
                 </ProtectedRoute>
               }
             />

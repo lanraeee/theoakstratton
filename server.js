@@ -61,10 +61,10 @@ async function seedDefaultAdmin() {
     if (existing.rows.length === 0) {
       const hashedPassword = await bcryptjs.hash(adminPassword, 10)
       await pool.query(
-        'INSERT INTO users (email, password_hash, role, is_active) VALUES ($1, $2, $3, $4)',
-        [adminEmail, hashedPassword, 'admin', true]
+        'INSERT INTO users (email, password_hash, role, is_superadmin, first_name, is_active) VALUES ($1, $2, $3, $4, $5, $6)',
+        [adminEmail, hashedPassword, 'admin', true, 'System', true]
       )
-      console.log('✓ Default admin user created')
+      console.log('✓ Default admin user created with superadmin role')
     }
   } catch (error) {
     console.warn('⚠️  Error seeding default admin user:', error.message)
@@ -398,6 +398,375 @@ app.get('/api/admin/dashboard', authenticateToken, async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch dashboard stats' })
   }
 })
+
+// ============================================================================
+// USER MANAGEMENT ENDPOINTS (Admin Only)
+// ============================================================================
+
+app.get('/api/admin/users', authenticateToken, async (req, res) => {
+  try {
+    if (!req.user || !req.user.role || req.user.role === 'manager') {
+      return res.status(403).json({ error: 'Unauthorized' })
+    }
+
+    if (databaseAvailable) {
+      const result = await pool.query('SELECT id, email, first_name, last_name, role, is_active, created_at, last_login FROM users ORDER BY created_at DESC')
+      return res.json(result.rows)
+    } else {
+      return res.json([{ id: '1', email: 'admin@oakstratton.com', first_name: 'System', role: 'admin', is_active: true, created_at: new Date() }])
+    }
+  } catch (error) {
+    console.error('Get users error:', error)
+    res.status(500).json({ error: 'Failed to fetch users' })
+  }
+})
+
+app.post('/api/admin/users', authenticateToken, async (req, res) => {
+  try {
+    if (!req.user || req.user.role === 'manager') {
+      return res.status(403).json({ error: 'Unauthorized - only admins can create users' })
+    }
+
+    const { email, password, firstName, lastName, role } = req.body
+
+    if (!email || !password || !firstName) {
+      return res.status(400).json({ error: 'Email, password, and first name required' })
+    }
+
+    if (!validator.isEmail(email)) {
+      return res.status(400).json({ error: 'Invalid email format' })
+    }
+
+    if (password.length < 8) {
+      return res.status(400).json({ error: 'Password must be at least 8 characters' })
+    }
+
+    if (databaseAvailable) {
+      const hashedPassword = await bcryptjs.hash(password, 10)
+      const result = await pool.query(
+        'INSERT INTO users (email, password_hash, first_name, last_name, role, is_active) VALUES ($1, $2, $3, $4, $5, true) RETURNING id, email, first_name, role',
+        [email, hashedPassword, firstName, lastName || '', role || 'manager']
+      )
+      return res.status(201).json(result.rows[0])
+    } else {
+      return res.status(503).json({ error: 'Database not available' })
+    }
+  } catch (error) {
+    console.error('Create user error:', error)
+    if (error.code === '23505') {
+      return res.status(409).json({ error: 'Email already exists' })
+    }
+    res.status(500).json({ error: 'Failed to create user' })
+  }
+})
+
+app.delete('/api/admin/users/:id', authenticateToken, async (req, res) => {
+  try {
+    if (!req.user || req.user.role === 'manager') {
+      return res.status(403).json({ error: 'Unauthorized' })
+    }
+
+    const { id } = req.params
+
+    if (databaseAvailable) {
+      await pool.query('UPDATE users SET is_active = false WHERE id = $1', [id])
+      return res.json({ success: true })
+    } else {
+      return res.status(503).json({ error: 'Database not available' })
+    }
+  } catch (error) {
+    console.error('Delete user error:', error)
+    res.status(500).json({ error: 'Failed to delete user' })
+  }
+})
+
+app.post('/api/admin/users/:id/change-password', authenticateToken, async (req, res) => {
+  try {
+    if (!req.user || req.user.role === 'manager') {
+      return res.status(403).json({ error: 'Unauthorized' })
+    }
+
+    const { id } = req.params
+    const { newPassword } = req.body
+
+    if (!newPassword || newPassword.length < 8) {
+      return res.status(400).json({ error: 'Password must be at least 8 characters' })
+    }
+
+    if (databaseAvailable) {
+      const hashedPassword = await bcryptjs.hash(newPassword, 10)
+      await pool.query('UPDATE users SET password_hash = $1, password_changed_at = CURRENT_TIMESTAMP WHERE id = $2', [hashedPassword, id])
+      return res.json({ success: true })
+    } else {
+      return res.status(503).json({ error: 'Database not available' })
+    }
+  } catch (error) {
+    console.error('Change password error:', error)
+    res.status(500).json({ error: 'Failed to change password' })
+  }
+})
+
+// ============================================================================
+// CONTENT MANAGEMENT ENDPOINTS
+// ============================================================================
+
+app.get('/api/landing-content', async (req, res) => {
+  try {
+    if (databaseAvailable) {
+      const result = await pool.query('SELECT section_name, section_key, content_type, content_value FROM landing_content ORDER BY section_name')
+      const contentMap = {}
+      result.rows.forEach(row => {
+        if (!contentMap[row.section_name]) contentMap[row.section_name] = {}
+        try {
+          contentMap[row.section_name][row.section_key] = row.content_type === 'json' ? JSON.parse(row.content_value) : row.content_value
+        } catch {
+          contentMap[row.section_name][row.section_key] = row.content_value
+        }
+      })
+      return res.json(contentMap)
+    } else {
+      return res.json(getLandingContentDefaults())
+    }
+  } catch (error) {
+    console.error('Get landing content error:', error)
+    res.status(500).json({ error: 'Failed to fetch content' })
+  }
+})
+
+app.put('/api/admin/landing-content/:sectionKey', authenticateToken, async (req, res) => {
+  try {
+    if (!req.user || req.user.role === 'manager') {
+      return res.status(403).json({ error: 'Unauthorized' })
+    }
+
+    const { sectionKey } = req.params
+    const { contentValue, contentType = 'text', sectionName = 'general' } = req.body
+
+    if (!contentValue) {
+      return res.status(400).json({ error: 'Content value required' })
+    }
+
+    if (databaseAvailable) {
+      const valueStr = typeof contentValue === 'string' ? contentValue : JSON.stringify(contentValue)
+      await pool.query(
+        'INSERT INTO landing_content (section_name, section_key, content_type, content_value, updated_by) VALUES ($1, $2, $3, $4, $5) ON CONFLICT (section_key) DO UPDATE SET content_value = $4, updated_by = $5, updated_at = CURRENT_TIMESTAMP, version = version + 1',
+        [sectionName, sectionKey, contentType, valueStr, req.user.id]
+      )
+      return res.json({ success: true })
+    } else {
+      return res.status(503).json({ error: 'Database not available' })
+    }
+  } catch (error) {
+    console.error('Update content error:', error)
+    res.status(500).json({ error: 'Failed to update content' })
+  }
+})
+
+// ============================================================================
+// PRICING & ORDERS ENDPOINTS
+// ============================================================================
+
+app.get('/api/plans', async (req, res) => {
+  try {
+    if (databaseAvailable) {
+      const result = await pool.query('SELECT id, name, description, price_gbp, features FROM pricing_plans WHERE is_active = true ORDER BY display_order')
+      return res.json(result.rows)
+    } else {
+      return res.json(getDefaultPlans())
+    }
+  } catch (error) {
+    console.error('Get plans error:', error)
+    res.status(500).json({ error: 'Failed to fetch plans' })
+  }
+})
+
+app.post('/api/checkout/create-session', formLimiter, async (req, res) => {
+  try {
+    const { planId, email, name } = req.body
+
+    if (!planId || !email || !name) {
+      return res.status(400).json({ error: 'Plan ID, email, and name required' })
+    }
+
+    if (!validator.isEmail(email)) {
+      return res.status(400).json({ error: 'Invalid email format' })
+    }
+
+    if (databaseAvailable) {
+      const planResult = await pool.query('SELECT id, name, price_gbp, stripe_price_id FROM pricing_plans WHERE id = $1 AND is_active = true', [planId])
+
+      if (planResult.rows.length === 0) {
+        return res.status(404).json({ error: 'Plan not found' })
+      }
+
+      const plan = planResult.rows[0]
+      const stripePrice = plan.stripe_price_id || (plan.price_gbp * 100).toString()
+      const orderNumber = `ORD-${Date.now()}`
+
+      const session = await stripeClient.checkout.sessions.create({
+        payment_method_types: ['card'],
+        line_items: [
+          {
+            price_data: {
+              currency: 'gbp',
+              product_data: {
+                name: plan.name,
+              },
+              unit_amount: plan.price_gbp,
+            },
+            quantity: 1,
+          },
+        ],
+        mode: 'payment',
+        success_url: `${process.env.CLIENT_URL || 'http://localhost:3000'}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${process.env.CLIENT_URL || 'http://localhost:3000'}/checkout/cancel`,
+        customer_email: email,
+        metadata: {
+          order_number: orderNumber,
+          plan_id: planId,
+          customer_name: name,
+        },
+      })
+
+      // Store order
+      await pool.query(
+        'INSERT INTO orders (order_number, customer_email, customer_name, plan_id, amount_gbp, stripe_session_id, status) VALUES ($1, $2, $3, $4, $5, $6, $7)',
+        [orderNumber, email, name, planId, plan.price_gbp, session.id, 'pending']
+      )
+
+      return res.json({ sessionId: session.id, url: session.url })
+    } else {
+      return res.status(503).json({ error: 'Database not available' })
+    }
+  } catch (error) {
+    console.error('Create session error:', error)
+    res.status(500).json({ error: 'Failed to create checkout session' })
+  }
+})
+
+app.get('/api/admin/orders', authenticateToken, async (req, res) => {
+  try {
+    if (!req.user || req.user.role === 'manager') {
+      return res.status(403).json({ error: 'Unauthorized' })
+    }
+
+    if (databaseAvailable) {
+      const result = await pool.query('SELECT id, order_number, customer_email, customer_name, amount_gbp, status, created_at FROM orders ORDER BY created_at DESC LIMIT 100')
+      return res.json(result.rows)
+    } else {
+      return res.json([])
+    }
+  } catch (error) {
+    console.error('Get orders error:', error)
+    res.status(500).json({ error: 'Failed to fetch orders' })
+  }
+})
+
+// ============================================================================
+// TESTIMONIALS ENDPOINTS
+// ============================================================================
+
+app.get('/api/testimonials', async (req, res) => {
+  try {
+    if (databaseAvailable) {
+      const result = await pool.query('SELECT id, quote, author, role, company, rating, image_url FROM testimonials WHERE is_active = true ORDER BY display_order')
+      return res.json(result.rows)
+    } else {
+      return res.json(getDefaultTestimonials())
+    }
+  } catch (error) {
+    console.error('Get testimonials error:', error)
+    res.status(500).json({ error: 'Failed to fetch testimonials' })
+  }
+})
+
+app.post('/api/admin/testimonials', authenticateToken, async (req, res) => {
+  try {
+    if (!req.user || req.user.role === 'manager') {
+      return res.status(403).json({ error: 'Unauthorized' })
+    }
+
+    const { quote, author, role, company, rating } = req.body
+
+    if (!quote || !author) {
+      return res.status(400).json({ error: 'Quote and author required' })
+    }
+
+    if (databaseAvailable) {
+      const result = await pool.query(
+        'INSERT INTO testimonials (quote, author, role, company, rating, is_active) VALUES ($1, $2, $3, $4, $5, true) RETURNING *',
+        [quote, author, role || '', company || '', rating || 5]
+      )
+      return res.status(201).json(result.rows[0])
+    } else {
+      return res.status(503).json({ error: 'Database not available' })
+    }
+  } catch (error) {
+    console.error('Create testimonial error:', error)
+    res.status(500).json({ error: 'Failed to create testimonial' })
+  }
+})
+
+// ============================================================================
+// STRIPE WEBHOOK HANDLER
+// ============================================================================
+
+app.post('/api/webhooks/stripe', async (req, res) => {
+  const sig = req.headers['stripe-signature']
+  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET
+
+  if (!webhookSecret) {
+    return res.status(400).json({ error: 'Webhook secret not configured' })
+  }
+
+  try {
+    const event = stripeClient.webhooks.constructEvent(req.body, sig, webhookSecret)
+
+    if (event.type === 'checkout.session.completed') {
+      const session = event.data.object
+      if (databaseAvailable && session.metadata.order_number) {
+        await pool.query(
+          'UPDATE orders SET stripe_payment_intent_id = $1, status = $2, stripe_customer_id = $3, updated_at = CURRENT_TIMESTAMP WHERE stripe_session_id = $4',
+          [session.payment_intent, 'completed', session.customer, session.id]
+        )
+      }
+    }
+
+    res.json({ received: true })
+  } catch (error) {
+    console.error('Webhook error:', error)
+    res.status(400).json({ error: 'Webhook error' })
+  }
+})
+
+// ============================================================================
+// DEFAULT DATA FUNCTIONS
+// ============================================================================
+
+function getLandingContentDefaults() {
+  return {
+    hero: {
+      hero_title: 'Modern BNPL Solutions for Your Business',
+      hero_subtitle: 'Empower customers with flexible payment options. Increase conversion rates by up to 30%.',
+      hero_cta: 'Get Started Today',
+    },
+  }
+}
+
+function getDefaultPlans() {
+  return [
+    { id: 'starter', name: 'Starter', description: 'Perfect for small businesses', price_gbp: 29900, features: ['Basic BNPL', 'Up to 100 customers', 'Email support'] },
+    { id: 'growth', name: 'Growth', description: 'For growing companies', price_gbp: 79900, features: ['Advanced BNPL', 'Up to 1000 customers', 'Priority support', 'Analytics'] },
+    { id: 'premium', name: 'Premium', description: 'Enterprise solution', price_gbp: 199900, features: ['Full BNPL Suite', 'Unlimited customers', '24/7 support', 'Custom integrations'] },
+  ]
+}
+
+function getDefaultTestimonials() {
+  return [
+    { id: '1', quote: 'Oakstratton increased our conversion rates by 28%', author: 'Sarah Johnson', role: 'CEO', company: 'TechStart Inc' },
+    { id: '2', quote: 'Best BNPL solution we\'ve ever implemented', author: 'Mike Chen', role: 'CFO', company: 'Growth Retail' },
+  ]
+}
 
 // ============================================================================
 // LEADS ENDPOINTS (Enhanced)

@@ -41,8 +41,33 @@ async function initializeDatabase() {
 
     await pool.query(schema)
     console.log('✓ Database schema initialized successfully')
+
+    // Seed default admin user
+    await seedDefaultAdmin()
   } catch (error) {
     console.warn('⚠️  Database schema initialization error:', error.message)
+  }
+}
+
+// Seed default admin user
+async function seedDefaultAdmin() {
+  try {
+    const adminEmail = 'admin@oakstratton.com'
+    const adminPassword = 'AdminPassword123!'
+
+    // Check if admin already exists
+    const existing = await pool.query('SELECT id FROM users WHERE email = $1', [adminEmail])
+
+    if (existing.rows.length === 0) {
+      const hashedPassword = await bcryptjs.hash(adminPassword, 10)
+      await pool.query(
+        'INSERT INTO users (email, password_hash, role, is_active) VALUES ($1, $2, $3, $4)',
+        [adminEmail, hashedPassword, 'admin', true]
+      )
+      console.log('✓ Default admin user created')
+    }
+  } catch (error) {
+    console.warn('⚠️  Error seeding default admin user:', error.message)
   }
 }
 

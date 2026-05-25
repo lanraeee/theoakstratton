@@ -919,43 +919,7 @@ app.post('/api/contact', formLimiter, async (req, res) => {
       [name, email, company, phone || null, 'contact', 'new']
     )
 
-    // Send emails if SMTP is configured
-    if (process.env.SMTP_USER) {
-      try {
-        // Send notification to admin
-        await sendEmailWithRetry({
-          from: `"Oakstratton"<${process.env.SMTP_USER}>`,
-          to: process.env.ADMIN_EMAIL || 'fawaz@belloite.com',
-          subject: `New Contact: ${name} from ${company}`,
-          html: `
-            <h2>New inquiry from your BNPL landing page</h2>
-            <p><strong>Name:</strong> ${escapeHtml(name)}</p>
-            <p><strong>Email:</strong> ${escapeHtml(email)}</p>
-            <p><strong>Company:</strong> ${escapeHtml(company)}</p>
-            <p><strong>Phone:</strong> ${escapeHtml(phone || 'Not provided')}</p>
-            <p><strong>Message:</strong></p>
-            <p>${escapeHtml(message || 'No message')}</p>
-          `,
-        })
-
-        // Send confirmation to customer
-        await sendEmailWithRetry({
-          from: `"Oakstratton Team"<${process.env.SMTP_USER}>`,
-          to: email,
-          subject: 'Thanks for reaching out - Oakstratton BNPL',
-          html: `
-            <h2>Thanks for your interest!</h2>
-            <p>Hi ${escapeHtml(name)},</p>
-            <p>We've received your inquiry about our BNPL solutions and will review it promptly.</p>
-            <p>Our team will be in touch within 24 hours.</p>
-            <p>Best regards,<br><strong>The Oakstratton Team</strong></p>
-          `,
-        })
-      } catch (emailError) {
-        console.error('Failed to send contact form emails:', emailError.message)
-        // Don't fail the request - lead is still saved in database
-      }
-    }
+    // TODO: Email functionality - implement later or configure SMTP_USER env var
 
     res.status(200).json({ success: true, message: 'Thank you! We\'ll be in touch soon.' })
   } catch (error) {
@@ -977,24 +941,7 @@ app.post('/api/waitlist', formLimiter, async (req, res) => {
       [email, company || 'N/A', name || 'N/A', 'waitlist', 'new']
     )
 
-    if (process.env.SMTP_USER) {
-      try {
-        await sendEmailWithRetry({
-          from: `"Oakstratton Team"<${process.env.SMTP_USER}>`,
-          to: email,
-          subject: 'Welcome to the Oakstratton BNPL Waitlist! 🎉',
-          html: `
-            <h2>You're on the list!</h2>
-            <p>Thanks for your interest in Oakstratton's BNPL solutions!</p>
-            <p>We'll notify you as soon as we launch, plus you'll get a special early adopter discount.</p>
-            <p>Best regards,<br><strong>The Oakstratton Team</strong></p>
-          `,
-        })
-      } catch (emailError) {
-        console.error('Failed to send waitlist confirmation email:', emailError.message)
-        // Don't fail the request - lead is still saved in database
-      }
-    }
+    // TODO: Email functionality - implement later or configure SMTP_USER env var
 
     res.status(200).json({ success: true, message: 'Welcome to the waitlist!' })
   } catch (error) {

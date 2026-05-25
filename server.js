@@ -1046,6 +1046,70 @@ app.get('/api/payment-methods', (req, res) => {
 })
 
 // ============================================================================
+// ADMIN DATA MANAGEMENT ENDPOINTS (Clear Demo Data)
+// ============================================================================
+
+app.post('/api/admin/clear-data', authenticateToken, async (req, res) => {
+  try {
+    if (!req.user || req.user.role !== 'admin') {
+      return res.status(403).json({ error: 'Unauthorized' })
+    }
+
+    const { tables } = req.body
+
+    if (!tables || !Array.isArray(tables)) {
+      return res.status(400).json({ error: 'Please specify tables to clear' })
+    }
+
+    const allowedTables = ['leads', 'analytics_events', 'email_events', 'orders', 'transactions']
+    const tablesToClear = tables.filter((t) => allowedTables.includes(t))
+
+    if (tablesToClear.length === 0) {
+      return res.status(400).json({ error: 'No valid tables specified' })
+    }
+
+    for (const table of tablesToClear) {
+      await pool.query(`DELETE FROM ${table}`)
+      console.log(`✓ Cleared ${table} table`)
+    }
+
+    res.json({ success: true, message: `Cleared ${tablesToClear.join(', ')} tables` })
+  } catch (error) {
+    console.error('Clear data error:', error)
+    res.status(500).json({ error: 'Failed to clear data' })
+  }
+})
+
+app.post('/api/admin/clear-leads', authenticateToken, async (req, res) => {
+  try {
+    if (!req.user || req.user.role !== 'admin') {
+      return res.status(403).json({ error: 'Unauthorized' })
+    }
+
+    await pool.query('DELETE FROM leads')
+    res.json({ success: true, message: 'All leads cleared' })
+  } catch (error) {
+    console.error('Clear leads error:', error)
+    res.status(500).json({ error: 'Failed to clear leads' })
+  }
+})
+
+app.post('/api/admin/clear-analytics', authenticateToken, async (req, res) => {
+  try {
+    if (!req.user || req.user.role !== 'admin') {
+      return res.status(403).json({ error: 'Unauthorized' })
+    }
+
+    await pool.query('DELETE FROM analytics_events')
+    await pool.query('DELETE FROM email_events')
+    res.json({ success: true, message: 'All analytics cleared' })
+  } catch (error) {
+    console.error('Clear analytics error:', error)
+    res.status(500).json({ error: 'Failed to clear analytics' })
+  }
+})
+
+// ============================================================================
 // HEALTH CHECK
 // ============================================================================
 

@@ -118,7 +118,7 @@ CREATE TABLE IF NOT EXISTS landing_content (
 
 -- Pricing plans for Stripe integration
 CREATE TABLE IF NOT EXISTS pricing_plans (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  id VARCHAR(100) PRIMARY KEY,
   name VARCHAR(100) NOT NULL,
   description TEXT,
   price_gbp INTEGER NOT NULL,
@@ -138,7 +138,7 @@ CREATE TABLE IF NOT EXISTS orders (
   order_number VARCHAR(50) UNIQUE NOT NULL,
   customer_email VARCHAR(254) NOT NULL,
   customer_name VARCHAR(255),
-  plan_id UUID REFERENCES pricing_plans(id) ON DELETE SET NULL,
+  plan_id VARCHAR(100) REFERENCES pricing_plans(id) ON DELETE SET NULL,
   amount_gbp INTEGER NOT NULL,
   currency VARCHAR(3) DEFAULT 'gbp',
   stripe_session_id VARCHAR(255) UNIQUE,
@@ -198,5 +198,5 @@ SELECT
   (SELECT COUNT(*) FROM leads WHERE created_at > CURRENT_TIMESTAMP - INTERVAL '7 days') as new_this_week,
   (SELECT COUNT(*) FROM email_templates WHERE is_active = true) as active_templates,
   (SELECT COUNT(*) FROM leads WHERE status = 'customer') as converted_customers,
-  (SELECT COALESCE(ROUND(100 * COUNT(CASE WHEN status = 'customer' THEN 1 END)::numeric / COUNT(*)::numeric, 2), 0)
+  (SELECT COALESCE(ROUND(100 * COUNT(CASE WHEN status = 'customer' THEN 1 END)::numeric / NULLIF(COUNT(*)::numeric, 0), 2), 0)
    FROM leads WHERE created_at > CURRENT_TIMESTAMP - INTERVAL '30 days') as engagement_rate;

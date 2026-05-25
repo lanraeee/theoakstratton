@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
 import AdminLayout from '@/components/admin/AdminLayout'
+import { useAlert } from '@/contexts/AlertContext'
 import api from '@/services/api'
 
 const chartData = [
@@ -21,6 +22,7 @@ const sourceData = [
 ]
 
 export default function DashboardPage() {
+  const { success, error } = useAlert()
   const [stats, setStats] = useState({
     totalLeads: 700,
     newThisWeek: 42,
@@ -29,6 +31,40 @@ export default function DashboardPage() {
     conversionRate: '24%',
     revenue: '£12,450',
   })
+  const [clearing, setClearing] = useState(false)
+
+  const handleClearData = async (type: 'leads' | 'analytics' | 'all') => {
+    if (!window.confirm(`Are you sure you want to delete all ${type} data? This cannot be undone.`)) {
+      return
+    }
+
+    setClearing(true)
+    try {
+      let endpoint = '/api/admin/clear-leads'
+      if (type === 'analytics') {
+        endpoint = '/api/admin/clear-analytics'
+      } else if (type === 'all') {
+        endpoint = '/api/admin/clear-data'
+      }
+
+      await api.post(endpoint, type === 'all' ? { tables: ['leads', 'analytics_events', 'email_events', 'orders'] } : {})
+      success(`${type} data cleared successfully`)
+      // Refresh stats
+      const response = await api.get('/api/admin/dashboard')
+      setStats({
+        totalLeads: response.data.total_leads || 0,
+        newThisWeek: response.data.new_this_week || 0,
+        activeTemplates: response.data.active_templates || 0,
+        engagementRate: `${response.data.engagement_rate || 0}%`,
+        conversionRate: '0%',
+        revenue: '£0',
+      })
+    } catch (err) {
+      error(`Failed to clear ${type} data`)
+    } finally {
+      setClearing(false)
+    }
+  }
 
   useEffect(() => {
     // Fetch dashboard stats
@@ -197,6 +233,44 @@ export default function DashboardPage() {
                 ))}
               </tbody>
             </table>
+          </div>
+        </motion.div>
+
+        {/* Data Management Section */}
+        <motion.div variants={itemVariants} className="card p-6 bg-red-50 border border-red-200">
+          <h3 className="text-xl font-bold text-dark mb-4">⚠️ Data Management (Launch Prep)</h3>
+          <p className="text-gray-700 mb-6">Clear all demo/test data before launch. This cannot be undone.</p>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => handleClearData('leads')}
+              disabled={clearing}
+              className="btn bg-red-500 hover:bg-red-600 text-white py-2 rounded-lg font-semibold"
+            >
+              {clearing ? 'Clearing...' : 'Clear All Leads'}
+            </motion.button>
+
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => handleClearData('analytics')}
+              disabled={clearing}
+              className="btn bg-orange-500 hover:bg-orange-600 text-white py-2 rounded-lg font-semibold"
+            >
+              {clearing ? 'Clearing...' : 'Clear Analytics'}
+            </motion.button>
+
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => handleClearData('all')}
+              disabled={clearing}
+              className="btn bg-red-700 hover:bg-red-800 text-white py-2 rounded-lg font-semibold"
+            >
+              {clearing ? 'Clearing...' : 'Clear ALL Data'}
+            </motion.button>
           </div>
         </motion.div>
       </motion.div>

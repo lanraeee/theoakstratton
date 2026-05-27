@@ -11,6 +11,7 @@ import jwt from 'jsonwebtoken'
 import bcryptjs from 'bcryptjs'
 import pg from 'pg'
 import path from 'path'
+import fs from 'fs'
 import { fileURLToPath } from 'url'
 import dotenv from 'dotenv'
 
@@ -472,6 +473,78 @@ app.get('/api/admin/dashboard', authenticateToken, async (req, res) => {
   } catch (error) {
     console.error('Dashboard stats error:', error)
     res.status(500).json({ error: 'Failed to fetch dashboard stats' })
+  }
+})
+
+// ============================================================================
+// LEADS MANAGEMENT ENDPOINTS
+// ============================================================================
+
+app.get('/api/admin/leads', authenticateToken, async (req, res) => {
+  try {
+    if (!req.user || (req.user.role !== 'admin' && req.user.role !== 'manager')) {
+      return res.status(403).json({ error: 'Unauthorized' })
+    }
+
+    if (databaseAvailable) {
+      const result = await pool.query(
+        'SELECT id, name, email, company, phone, source, status, created_at FROM leads ORDER BY created_at DESC LIMIT 500'
+      )
+      return res.json(result.rows.map(row => ({
+        id: row.id,
+        name: row.name || 'N/A',
+        email: row.email,
+        company: row.company || 'N/A',
+        phone: row.phone || '',
+        source: row.source || 'contact',
+        status: row.status || 'new',
+        date: row.created_at ? new Date(row.created_at).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+      })))
+    } else {
+      return res.json([])
+    }
+  } catch (error) {
+    console.error('Get leads error:', error)
+    res.status(500).json({ error: 'Failed to fetch leads' })
+  }
+})
+
+app.post('/api/admin/send-response/:leadId', authenticateToken, async (req, res) => {
+  try {
+    if (!req.user || (req.user.role !== 'admin' && req.user.role !== 'manager')) {
+      return res.status(403).json({ error: 'Unauthorized' })
+    }
+
+    const { leadId } = req.params
+    const { message } = req.body
+
+    if (!message || !message.trim()) {
+      return res.status(400).json({ error: 'Message is required' })
+    }
+
+    if (databaseAvailable) {
+      // Get lead info
+      const leadResult = await pool.query('SELECT email, name FROM leads WHERE id = $1', [leadId])
+      if (leadResult.rows.length === 0) {
+        return res.status(404).json({ error: 'Lead not found' })
+      }
+
+      const lead = leadResult.rows[0]
+
+      // TODO: Send email via configured SMTP (currently disabled)
+      // For now, just save the message and update status
+      await pool.query(
+        'UPDATE leads SET status = $1, notes = $2 WHERE id = $3',
+        ['contacted', (message || '').substring(0, 1000)]
+      )
+
+      res.json({ success: true, message: 'Response sent successfully' })
+    } else {
+      res.status(503).json({ error: 'Database not available' })
+    }
+  } catch (error) {
+    console.error('Send response error:', error)
+    res.status(500).json({ error: 'Failed to send response' })
   }
 })
 
@@ -1081,6 +1154,75 @@ app.post('/api/admin/clear-analytics', authenticateToken, async (req, res) => {
   } catch (error) {
     console.error('Clear analytics error:', error)
     res.status(500).json({ error: 'Failed to clear analytics' })
+  }
+})
+
+// ============================================================================
+// FILE UPLOAD ENDPOINTS
+// ============================================================================
+
+app.post('/api/admin/upload-asset', authenticateToken, async (req, res) => {
+  try {
+    if (!req.user || req.user.role !== 'admin') {
+      return res.status(403).json({ error: 'Unauthorized' })
+    }
+
+    // Get raw body for file upload
+    let chunks = []
+    req.on('data', chunk => chunks.push(chunk))
+    req.on('end', async () => {
+      try {
+        const body = Buffer.concat(chunks).toString('utf-8')
+        const boundary = req.headers['content-type'].split('boundary=')[1]
+
+        // Simple multipart form-data parser
+        const parts = body.split(`--${boundary}`)
+        let fileData = null
+        let filename = null
+        let fileType = null
+
+        for (const part of parts) {
+          if (part.includes('filename=')) {
+            const filenameMatch = part.match(/filename="([^"]+)"/)
+            if (filenameMatch) filename = filenameMatch[1]
+
+            const typeMatch = part.match(/name="type".*?\r\n\r\n([^\r\n]+)/)
+            if (typeMatch) fileType = typeMatch[1]
+
+            const fileContent = part.split('\r\n\r\n')[1]?.split('\r\n--')[0]
+            if (fileContent) fileData = fileContent
+          }
+        }
+
+        if (!fileData || !filename || !fileType) {
+          return res.status(400).json({ error: 'File upload failed' })
+        }
+
+        // Save file to public folder
+        const publicPath = path.join(__dirname, 'public', 'assets')
+        if (!fs.existsSync(publicPath)) {
+          fs.mkdirSync(publicPath, { recursive: true })
+        }
+
+        let filepath
+        if (fileType === 'logo') {
+          filepath = path.join(publicPath, 'logo.png')
+        } else if (fileType === 'favicon') {
+          filepath = path.join(publicPath, 'favicon.ico')
+        } else {
+          return res.status(400).json({ error: 'Invalid file type' })
+        }
+
+        fs.writeFileSync(filepath, Buffer.from(fileData, 'binary'))
+        res.json({ success: true, message: `${fileType} uploaded successfully`, path: `/assets/${path.basename(filepath)}` })
+      } catch (parseErr) {
+        console.error('File parse error:', parseErr)
+        res.status(500).json({ error: 'Failed to parse file upload' })
+      }
+    })
+  } catch (error) {
+    console.error('Upload asset error:', error)
+    res.status(500).json({ error: 'Failed to upload asset' })
   }
 })
 

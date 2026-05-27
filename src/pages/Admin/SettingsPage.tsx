@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import AdminLayout from '@/components/admin/AdminLayout'
 import { useAlert } from '@/contexts/AlertContext'
+import api from '@/services/api'
 
 interface NotificationPreferences {
   emailAlerts: {
@@ -25,8 +26,12 @@ interface NotificationPreferences {
 }
 
 export default function SettingsPage() {
-  const { success } = useAlert()
-  const [activeTab, setActiveTab] = useState<'notifications' | 'export' | 'api'>('notifications')
+  const { success, error } = useAlert()
+  const [activeTab, setActiveTab] = useState<'notifications' | 'export' | 'api' | 'branding'>('notifications')
+  const logoFileRef = useRef<HTMLInputElement>(null)
+  const faviconFileRef = useRef<HTMLInputElement>(null)
+  const [uploadingLogo, setUploadingLogo] = useState(false)
+  const [uploadingFavicon, setUploadingFavicon] = useState(false)
   const [preferences, setPreferences] = useState<NotificationPreferences>({
     emailAlerts: {
       newLeads: true,
@@ -58,10 +63,53 @@ export default function SettingsPage() {
     }, 800)
   }
 
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setUploadingLogo(true)
+    const formData = new FormData()
+    formData.append('file', file)
+    formData.append('type', 'logo')
+
+    try {
+      await api.post('/api/admin/upload-asset', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      })
+      success('Logo uploaded successfully')
+    } catch (err: any) {
+      error(err.response?.data?.error || 'Failed to upload logo')
+    } finally {
+      setUploadingLogo(false)
+    }
+  }
+
+  const handleFaviconUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setUploadingFavicon(true)
+    const formData = new FormData()
+    formData.append('file', file)
+    formData.append('type', 'favicon')
+
+    try {
+      await api.post('/api/admin/upload-asset', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      })
+      success('Favicon uploaded successfully')
+    } catch (err: any) {
+      error(err.response?.data?.error || 'Failed to upload favicon')
+    } finally {
+      setUploadingFavicon(false)
+    }
+  }
+
   const tabs = [
     { id: 'notifications', label: '🔔 Notifications', icon: '🔔' },
     { id: 'export', label: '📥 Exports', icon: '📥' },
     { id: 'api', label: '🔑 API Settings', icon: '🔑' },
+    { id: 'branding', label: '🎨 Branding', icon: '🎨' },
   ] as const
 
   return (
@@ -367,6 +415,76 @@ export default function SettingsPage() {
                       </div>
                     </div>
                   </div>
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          {activeTab === 'branding' && (
+            <motion.div key="branding" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }} className="space-y-6">
+              <div className="card p-8">
+                <h3 className="text-2xl font-bold text-dark mb-6">Branding Assets</h3>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  {/* Logo Upload */}
+                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-primary-500 transition-colors">
+                    <input
+                      ref={logoFileRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={handleLogoUpload}
+                      className="hidden"
+                    />
+                    <div className="text-5xl mb-3">📷</div>
+                    <h4 className="text-lg font-semibold text-dark mb-2">Upload Logo</h4>
+                    <p className="text-sm text-gray-600 mb-4">
+                      Recommended: PNG, max 5MB
+                      <br />
+                      Dimensions: 200x200px or larger
+                    </p>
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => logoFileRef.current?.click()}
+                      disabled={uploadingLogo}
+                      className="btn btn-primary disabled:opacity-50"
+                    >
+                      {uploadingLogo ? 'Uploading...' : 'Choose File'}
+                    </motion.button>
+                  </div>
+
+                  {/* Favicon Upload */}
+                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-primary-500 transition-colors">
+                    <input
+                      ref={faviconFileRef}
+                      type="file"
+                      accept="image/x-icon,image/png"
+                      onChange={handleFaviconUpload}
+                      className="hidden"
+                    />
+                    <div className="text-5xl mb-3">🌐</div>
+                    <h4 className="text-lg font-semibold text-dark mb-2">Upload Favicon</h4>
+                    <p className="text-sm text-gray-600 mb-4">
+                      Recommended: ICO or PNG
+                      <br />
+                      Dimensions: 16x16px or 32x32px
+                    </p>
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => faviconFileRef.current?.click()}
+                      disabled={uploadingFavicon}
+                      className="btn btn-primary disabled:opacity-50"
+                    >
+                      {uploadingFavicon ? 'Uploading...' : 'Choose File'}
+                    </motion.button>
+                  </div>
+                </div>
+
+                <div className="mt-8 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                  <p className="text-sm text-blue-900">
+                    ℹ️ <strong>Note:</strong> Assets are stored in the public folder. Make sure to clear your browser cache to see updates immediately.
+                  </p>
                 </div>
               </div>
             </motion.div>

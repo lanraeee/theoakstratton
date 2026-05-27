@@ -772,6 +772,34 @@ app.post('/api/checkout/create-session', formLimiter, async (req, res) => {
   }
 })
 
+app.get('/api/checkout/session-details', async (req, res) => {
+  try {
+    const { session_id } = req.query
+
+    if (!session_id) {
+      return res.status(400).json({ error: 'Session ID required' })
+    }
+
+    const session = await stripeClient.checkout.sessions.retrieve(session_id)
+
+    if (!session) {
+      return res.status(404).json({ error: 'Session not found' })
+    }
+
+    // Return relevant session details
+    res.json({
+      id: session.id,
+      email: session.customer_email,
+      plan_name: session.metadata?.plan_id,
+      amount: (session.amount_total / 100).toFixed(2),
+      status: session.payment_status,
+    })
+  } catch (error) {
+    console.error('Get session details error:', error)
+    res.status(500).json({ error: 'Failed to fetch session details' })
+  }
+})
+
 app.get('/api/admin/orders', authenticateToken, async (req, res) => {
   try {
     if (!req.user || req.user.role === 'manager') {

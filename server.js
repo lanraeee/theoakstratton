@@ -50,6 +50,8 @@ async function initializeDatabase() {
     await seedDefaultAdmin()
     await seedDefaultPlans()
     await seedDefaultEmailTemplates()
+    await seedDefaultTestimonials()
+    await seedDefaultLandingContent()
   } catch (error) {
     console.warn('⚠️  Database schema initialization error:', error.message)
   }
@@ -175,6 +177,110 @@ async function seedDefaultEmailTemplates() {
     console.log('✓ Default email templates seeded')
   } catch (error) {
     console.warn('⚠️  Note: Email template seeding skipped (schema mismatch or database unavailable)')
+  }
+}
+
+// Seed default testimonials
+async function seedDefaultTestimonials() {
+  try {
+    const testimonials = [
+      {
+        quote: 'Oakstratton has transformed how we offer payment flexibility to our customers. Implementation was seamless and the support team was incredibly helpful.',
+        author: 'Sarah Johnson',
+        role: 'Finance Director',
+        company: 'TechFlow Solutions',
+        rating: 5,
+      },
+      {
+        quote: 'The BNPL integration increased our conversion rate by 35% in just the first month. Highly recommend Oakstratton!',
+        author: 'Michael Chen',
+        role: 'CEO',
+        company: 'Growth Retail Co',
+        rating: 5,
+      },
+      {
+        quote: 'Amazing product and even better customer service. Oakstratton made it easy to add buy now pay later options without any technical headaches.',
+        author: 'Emma Davis',
+        role: 'Operations Manager',
+        company: 'Fashion Plus',
+        rating: 5,
+      },
+      {
+        quote: 'The analytics dashboard gave us incredible insights into customer payment preferences. Data-driven decisions have never been easier.',
+        author: 'James Wilson',
+        role: 'Business Analyst',
+        company: 'Digital Innovations Ltd',
+        rating: 4,
+      },
+    ]
+
+    for (const testimonial of testimonials) {
+      try {
+        const existing = await pool.query(
+          'SELECT id FROM testimonials WHERE quote = $1',
+          [testimonial.quote]
+        )
+
+        if (existing.rows.length === 0) {
+          await pool.query(
+            'INSERT INTO testimonials (quote, author, role, company, rating, is_active, is_featured, display_order) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)',
+            [testimonial.quote, testimonial.author, testimonial.role, testimonial.company, testimonial.rating, true, true, Math.random()]
+          )
+        }
+      } catch (err) {
+        // Silently skip individual testimonial errors
+      }
+    }
+    console.log('✓ Default testimonials seeded')
+  } catch (error) {
+    console.warn('⚠️  Note: Testimonial seeding skipped (schema mismatch or database unavailable)')
+  }
+}
+
+// Seed default landing content
+async function seedDefaultLandingContent() {
+  try {
+    const content = [
+      { section: 'hero', key: 'hero_content', value: JSON.stringify([
+        { id: 1, title: 'Flexible Payment Solutions for Your Customers', subtitle: 'Enable Buy Now Pay Later with Oakstratton', image: '🛍️' },
+        { id: 2, title: 'Industry-Leading BNPL Providers', subtitle: 'Klarna, Clearpay, PayPal & More', image: '💳' },
+      ]) },
+      { section: 'features', key: 'features_content', value: JSON.stringify([
+        { id: 1, title: 'Easy Integration', description: 'Connect in minutes with our simple API', icon: '⚡' },
+        { id: 2, title: 'Multiple BNPL Providers', description: 'Offer various payment options to customers', icon: '🔗' },
+        { id: 3, title: 'Real-Time Analytics', description: 'Track conversions and customer behavior', icon: '📊' },
+      ]) },
+      { section: 'pricing', key: 'pricing_title', value: 'Simple, Transparent Pricing' },
+      { section: 'pricing', key: 'pricing_subtitle', value: 'Choose the plan that fits your business' },
+      { section: 'waitlist', key: 'waitlist_title', value: 'Join Our Waitlist' },
+      { section: 'waitlist', key: 'waitlist_description', value: 'Be the first to know when we launch new features' },
+      { section: 'contact', key: 'contact_title', value: 'Get In Touch' },
+      { section: 'contact', key: 'contact_description', value: 'Have questions? Our team is ready to help' },
+      { section: 'cta', key: 'cta_content', value: JSON.stringify([
+        { id: 1, title: 'Ready to Transform Your Payments?', description: 'Start your free trial today', button: 'Get Started' },
+      ]) },
+    ]
+
+    for (const item of content) {
+      try {
+        const existing = await pool.query(
+          'SELECT id FROM landing_content WHERE section_key = $1',
+          [item.key]
+        )
+
+        if (existing.rows.length === 0) {
+          await pool.query(
+            'INSERT INTO landing_content (section_name, section_key, content_type, content_value) VALUES ($1, $2, $3, $4)',
+            [item.section, item.key, 'json', item.value]
+          )
+        }
+      } catch (err) {
+        // Silently skip individual content errors
+      }
+    }
+    console.log('✓ Default landing content seeded')
+  } catch (error) {
+    console.warn('⚠️  Note: Landing content seeding skipped (schema mismatch or database unavailable)')
   }
 }
 

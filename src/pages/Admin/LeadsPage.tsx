@@ -1,7 +1,8 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import AdminLayout from '@/components/admin/AdminLayout'
 import { useAlert } from '@/contexts/AlertContext'
+import api from '@/services/api'
 import Papa from 'papaparse'
 
 interface Lead {
@@ -27,12 +28,55 @@ const MOCK_LEADS: Lead[] = [
 ]
 
 export default function LeadsPage() {
-  const [leads] = useState<Lead[]>(MOCK_LEADS)
+  const [leads, setLeads] = useState<Lead[]>(MOCK_LEADS)
+  const [loading, setLoading] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const [sourceFilter, setSourceFilter] = useState<'all' | Lead['source']>('all')
   const [statusFilter, setStatusFilter] = useState<'all' | Lead['status']>('all')
   const [selectedLeads, setSelectedLeads] = useState<string[]>([])
-  const { success } = useAlert()
+  const [selectedLead, setSelectedLead] = useState<Lead | null>(null)
+  const [responseMessage, setResponseMessage] = useState('')
+  const [sendingEmail, setSendingEmail] = useState(false)
+  const { success, error } = useAlert()
+
+  useEffect(() => {
+    fetchLeads()
+  }, [])
+
+  const fetchLeads = async () => {
+    try {
+      setLoading(true)
+      const response = await api.get('/api/admin/leads')
+      setLeads(response.data)
+    } catch (err) {
+      console.error('Failed to fetch leads:', err)
+      // Keep using mock data on error
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleSendResponse = async () => {
+    if (!selectedLead || !responseMessage.trim()) {
+      error('Please select a lead and write a message')
+      return
+    }
+
+    setSendingEmail(true)
+    try {
+      await api.post(`/api/admin/send-response/${selectedLead.id}`, {
+        message: responseMessage,
+      })
+      success('Response sent successfully')
+      setResponseMessage('')
+      setSelectedLead(null)
+      fetchLeads()
+    } catch (err: any) {
+      error(err.response?.data?.error || 'Failed to send response')
+    } finally {
+      setSendingEmail(false)
+    }
+  }
 
   // Filter and search leads
   const filteredLeads = useMemo(() => {
@@ -212,8 +256,12 @@ export default function LeadsPage() {
                     </td>
                     <td className="px-6 py-4 text-gray-600 text-sm">{lead.date}</td>
                     <td className="px-6 py-4 text-right">
-                      <motion.button whileHover={{ scale: 1.1 }} className="text-primary-500 hover:text-primary-700 font-semibold">
-                        →
+                      <motion.button
+                        whileHover={{ scale: 1.1 }}
+                        onClick={() => setSelectedLead(lead)}
+                        className="text-primary-500 hover:text-primary-700 font-semibold"
+                      >
+                        Reply
                       </motion.button>
                     </td>
                   </motion.tr>
@@ -239,6 +287,66 @@ export default function LeadsPage() {
         >
           📥 Export All {filteredLeads.length > 0 && `(${filteredLeads.length})`}
         </motion.button>
+
+        {/* Response Panel */}
+        {selectedLead && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="card p-6 bg-blue-50 border border-blue-200 mt-6"
+          >
+            <div className="flex justify-between items-start mb-4">
+              <div>
+                <h3 className="text-xl font-bold text-dark mb-1">Send Response to {selectedLead.name}</h3>
+                <p className="text-sm text-gray-600">{selectedLead.email} • {selectedLead.company}</p>
+              </div>
+              <motion.button
+                whileHover={{ scale: 1.1 }}
+                onClick={() => setSelectedLead(null)}
+                className="text-gray-400 hover:text-gray-600 text-2xl"
+              >
+                ✕
+              </motion.button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Message to Send
+                </label>
+                <textarea
+                  value={responseMessage}
+                  onChange={(e) => setResponseMessage(e.target.value)}
+                  placeholder="Write your response here..."
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  rows={6}
+                />
+              </div>
+
+              <div className="flex gap-3">
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={handleSendResponse}
+                  disabled={sendingEmail || !responseMessage.trim()}
+                  className="flex-1 btn btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {sendingEmail ? 'Sending...' : '📧 Send Email Response'}
+                </motion.button>
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  onClick={() => {
+                    setSelectedLead(null)
+                    setResponseMessage('')
+                  }}
+                  className="flex-1 btn btn-outline"
+                >
+                  Cancel
+                </motion.button>
+              </div>
+            </div>
+          </motion.div>
+        )}
       </motion.div>
     </AdminLayout>
   )

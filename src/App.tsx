@@ -7,6 +7,8 @@ import AlertNotifications from './components/common/AlertNotifications'
 // Pages
 import LandingPage from './pages/Landing'
 import CheckoutPage from './pages/CheckoutPage'
+import CheckoutSuccessPage from './pages/CheckoutSuccessPage'
+import CheckoutCancelPage from './pages/CheckoutCancelPage'
 import LoginPage from './pages/Admin/LoginPage'
 import DashboardPage from './pages/Admin/DashboardPage'
 import LeadsPage from './pages/Admin/LeadsPage'
@@ -31,6 +33,8 @@ function App() {
             {/* Public Routes */}
             <Route path="/" element={<LandingPage />} />
             <Route path="/checkout" element={<CheckoutPage />} />
+            <Route path="/checkout/success" element={<CheckoutSuccessPage />} />
+            <Route path="/checkout/cancel" element={<CheckoutCancelPage />} />
             <Route path="/admin/login" element={<LoginPage />} />
 
             {/* Protected Admin Routes */}

@@ -1093,7 +1093,7 @@ app.get('/api/admin/email-templates', authenticateToken, async (req, res) => {
 
     if (databaseAvailable) {
       const result = await pool.query(
-        'SELECT id, name, subject, html_content as body, is_active, created_at FROM email_templates ORDER BY created_at DESC'
+        'SELECT id, name, subject, html_content as body, is_active, updated_at FROM email_templates ORDER BY updated_at DESC'
       )
       return res.json(result.rows.map(row => ({
         id: row.id,

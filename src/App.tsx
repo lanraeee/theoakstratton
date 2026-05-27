@@ -21,6 +21,8 @@ import ReportingPage from './pages/Admin/ReportingPage'
 import UserManagementPage from './pages/Admin/UserManagementPage'
 import ContentManagementPage from './pages/Admin/ContentManagementPage'
 import OrdersManagementPage from './pages/Admin/OrdersManagementPage'
+import EmailTemplatesPage from './pages/Admin/EmailTemplatesPage'
+import EmailCampaignsPage from './pages/Admin/EmailCampaignsPage'
 import NotFoundPage from './pages/NotFound'
 
 function App() {
@@ -83,6 +85,22 @@ function App() {
               element={
                 <ProtectedRoute>
                   <TemplatesPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/email-templates"
+              element={
+                <ProtectedRoute>
+                  <EmailTemplatesPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/email-campaigns"
+              element={
+                <ProtectedRoute>
+                  <EmailCampaignsPage />
                 </ProtectedRoute>
               }
             />

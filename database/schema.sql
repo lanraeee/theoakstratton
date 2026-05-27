@@ -154,6 +154,30 @@ CREATE TABLE IF NOT EXISTS orders (
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Email campaigns for bulk sending
+CREATE TABLE IF NOT EXISTS email_campaigns (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name VARCHAR(255) NOT NULL,
+  template_id UUID REFERENCES email_templates(id) ON DELETE SET NULL,
+  segment VARCHAR(50) NOT NULL CHECK (segment IN ('all', 'waitlist', 'contacted', 'customers', 'new')),
+  recipient_count INT DEFAULT 0,
+  status VARCHAR(50) DEFAULT 'draft' CHECK (status IN ('draft', 'scheduled', 'sending', 'sent')),
+  sent_at TIMESTAMP,
+  created_by UUID REFERENCES users(id) ON DELETE SET NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Campaign sends tracking
+CREATE TABLE IF NOT EXISTS campaign_sends (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  campaign_id UUID REFERENCES email_campaigns(id) ON DELETE CASCADE,
+  lead_id UUID REFERENCES leads(id) ON DELETE CASCADE,
+  sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  opened_at TIMESTAMP,
+  clicked_at TIMESTAMP
+);
+
 -- Testimonials for landing page
 CREATE TABLE IF NOT EXISTS testimonials (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -190,6 +214,10 @@ CREATE INDEX IF NOT EXISTS idx_orders_status ON orders(status);
 CREATE INDEX IF NOT EXISTS idx_orders_created_at ON orders(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_testimonials_is_active ON testimonials(is_active);
 CREATE INDEX IF NOT EXISTS idx_testimonials_featured ON testimonials(is_featured);
+CREATE INDEX IF NOT EXISTS idx_email_campaigns_status ON email_campaigns(status);
+CREATE INDEX IF NOT EXISTS idx_email_campaigns_segment ON email_campaigns(segment);
+CREATE INDEX IF NOT EXISTS idx_campaign_sends_campaign_id ON campaign_sends(campaign_id);
+CREATE INDEX IF NOT EXISTS idx_campaign_sends_lead_id ON campaign_sends(lead_id);
 
 -- Create views for common queries
 CREATE OR REPLACE VIEW dashboard_stats AS

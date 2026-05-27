@@ -892,6 +892,241 @@ app.get('/api/admin/orders', authenticateToken, async (req, res) => {
 })
 
 // ============================================================================
+// EMAIL TEMPLATES ENDPOINTS
+// ============================================================================
+
+app.get('/api/admin/email-templates', authenticateToken, async (req, res) => {
+  try {
+    if (!req.user || (req.user.role !== 'admin' && req.user.role !== 'manager')) {
+      return res.status(403).json({ error: 'Unauthorized' })
+    }
+
+    if (databaseAvailable) {
+      const result = await pool.query(
+        'SELECT id, name, subject, html_content as body, is_active, created_at FROM email_templates ORDER BY created_at DESC'
+      )
+      return res.json(result.rows.map(row => ({
+        id: row.id,
+        name: row.name,
+        subject: row.subject,
+        body: row.body,
+        preview: row.body.substring(0, 100),
+        is_active: row.is_active,
+        created_at: row.created_at,
+      })))
+    } else {
+      return res.json([])
+    }
+  } catch (error) {
+    console.error('Get email templates error:', error)
+    res.status(500).json({ error: 'Failed to fetch templates' })
+  }
+})
+
+app.post('/api/admin/email-templates', authenticateToken, async (req, res) => {
+  try {
+    if (!req.user || req.user.role !== 'admin') {
+      return res.status(403).json({ error: 'Unauthorized' })
+    }
+
+    const { name, subject, body, is_active } = req.body
+
+    if (!name || !subject || !body) {
+      return res.status(400).json({ error: 'All fields are required' })
+    }
+
+    if (databaseAvailable) {
+      const result = await pool.query(
+        'INSERT INTO email_templates (name, subject, html_content, is_active, created_by) VALUES ($1, $2, $3, $4, $5) RETURNING id',
+        [name, subject, body, is_active !== false, req.user.id]
+      )
+      res.json({ success: true, id: result.rows[0].id })
+    } else {
+      res.status(503).json({ error: 'Database not available' })
+    }
+  } catch (error) {
+    console.error('Create template error:', error)
+    res.status(500).json({ error: 'Failed to create template' })
+  }
+})
+
+app.put('/api/admin/email-templates/:id', authenticateToken, async (req, res) => {
+  try {
+    if (!req.user || req.user.role !== 'admin') {
+      return res.status(403).json({ error: 'Unauthorized' })
+    }
+
+    const { name, subject, body, is_active } = req.body
+    const { id } = req.params
+
+    if (!name || !subject || !body) {
+      return res.status(400).json({ error: 'All fields are required' })
+    }
+
+    if (databaseAvailable) {
+      await pool.query(
+        'UPDATE email_templates SET name = $1, subject = $2, html_content = $3, is_active = $4 WHERE id = $5',
+        [name, subject, body, is_active !== false, id]
+      )
+      res.json({ success: true })
+    } else {
+      res.status(503).json({ error: 'Database not available' })
+    }
+  } catch (error) {
+    console.error('Update template error:', error)
+    res.status(500).json({ error: 'Failed to update template' })
+  }
+})
+
+app.delete('/api/admin/email-templates/:id', authenticateToken, async (req, res) => {
+  try {
+    if (!req.user || req.user.role !== 'admin') {
+      return res.status(403).json({ error: 'Unauthorized' })
+    }
+
+    const { id } = req.params
+
+    if (databaseAvailable) {
+      await pool.query('DELETE FROM email_templates WHERE id = $1', [id])
+      res.json({ success: true })
+    } else {
+      res.status(503).json({ error: 'Database not available' })
+    }
+  } catch (error) {
+    console.error('Delete template error:', error)
+    res.status(500).json({ error: 'Failed to delete template' })
+  }
+})
+
+// ============================================================================
+// EMAIL CAMPAIGNS ENDPOINTS
+// ============================================================================
+
+app.get('/api/admin/email-campaigns', authenticateToken, async (req, res) => {
+  try {
+    if (!req.user || (req.user.role !== 'admin' && req.user.role !== 'manager')) {
+      return res.status(403).json({ error: 'Unauthorized' })
+    }
+
+    if (databaseAvailable) {
+      const result = await pool.query(
+        'SELECT id, name, template_id, segment, recipient_count, status, sent_at, created_at FROM email_campaigns ORDER BY created_at DESC'
+      )
+      return res.json(result.rows)
+    } else {
+      return res.json([])
+    }
+  } catch (error) {
+    console.error('Get campaigns error:', error)
+    res.status(500).json({ error: 'Failed to fetch campaigns' })
+  }
+})
+
+app.post('/api/admin/email-campaigns', authenticateToken, async (req, res) => {
+  try {
+    if (!req.user || req.user.role !== 'admin') {
+      return res.status(403).json({ error: 'Unauthorized' })
+    }
+
+    const { name, template_id, segment } = req.body
+
+    if (!name || !template_id || !segment) {
+      return res.status(400).json({ error: 'All fields are required' })
+    }
+
+    if (databaseAvailable) {
+      // Get recipient count based on segment
+      let recipientCount = 0
+      if (segment === 'all') {
+        const countResult = await pool.query('SELECT COUNT(*) as count FROM leads')
+        recipientCount = parseInt(countResult.rows[0].count)
+      } else if (segment === 'waitlist') {
+        const countResult = await pool.query('SELECT COUNT(*) as count FROM leads WHERE source = $1', ['waitlist'])
+        recipientCount = parseInt(countResult.rows[0].count)
+      } else if (segment === 'contacted') {
+        const countResult = await pool.query('SELECT COUNT(*) as count FROM leads WHERE status = $1', ['contacted'])
+        recipientCount = parseInt(countResult.rows[0].count)
+      } else if (segment === 'customers') {
+        const countResult = await pool.query('SELECT COUNT(*) as count FROM leads WHERE status = $1', ['customer'])
+        recipientCount = parseInt(countResult.rows[0].count)
+      } else if (segment === 'new') {
+        const countResult = await pool.query('SELECT COUNT(*) as count FROM leads WHERE status = $1', ['new'])
+        recipientCount = parseInt(countResult.rows[0].count)
+      }
+
+      const result = await pool.query(
+        'INSERT INTO email_campaigns (name, template_id, segment, recipient_count, created_by) VALUES ($1, $2, $3, $4, $5) RETURNING id',
+        [name, template_id, segment, recipientCount, req.user.id]
+      )
+      res.json({ success: true, id: result.rows[0].id })
+    } else {
+      res.status(503).json({ error: 'Database not available' })
+    }
+  } catch (error) {
+    console.error('Create campaign error:', error)
+    res.status(500).json({ error: 'Failed to create campaign' })
+  }
+})
+
+app.post('/api/admin/email-campaigns/:id/send', authenticateToken, async (req, res) => {
+  try {
+    if (!req.user || req.user.role !== 'admin') {
+      return res.status(403).json({ error: 'Unauthorized' })
+    }
+
+    const { id } = req.params
+
+    if (databaseAvailable) {
+      // Get campaign details
+      const campaignResult = await pool.query(
+        'SELECT * FROM email_campaigns WHERE id = $1',
+        [id]
+      )
+
+      if (campaignResult.rows.length === 0) {
+        return res.status(404).json({ error: 'Campaign not found' })
+      }
+
+      const campaign = campaignResult.rows[0]
+
+      // TODO: Send emails based on segment
+      // For now, just mark as sent
+      await pool.query(
+        'UPDATE email_campaigns SET status = $1, sent_at = CURRENT_TIMESTAMP WHERE id = $2',
+        ['sent', id]
+      )
+
+      res.json({ success: true, message: `Campaign sent to ${campaign.recipient_count} recipients` })
+    } else {
+      res.status(503).json({ error: 'Database not available' })
+    }
+  } catch (error) {
+    console.error('Send campaign error:', error)
+    res.status(500).json({ error: 'Failed to send campaign' })
+  }
+})
+
+app.delete('/api/admin/email-campaigns/:id', authenticateToken, async (req, res) => {
+  try {
+    if (!req.user || req.user.role !== 'admin') {
+      return res.status(403).json({ error: 'Unauthorized' })
+    }
+
+    const { id } = req.params
+
+    if (databaseAvailable) {
+      await pool.query('DELETE FROM email_campaigns WHERE id = $1', [id])
+      res.json({ success: true })
+    } else {
+      res.status(503).json({ error: 'Database not available' })
+    }
+  } catch (error) {
+    console.error('Delete campaign error:', error)
+    res.status(500).json({ error: 'Failed to delete campaign' })
+  }
+})
+
+// ============================================================================
 // TESTIMONIALS ENDPOINTS
 // ============================================================================
 

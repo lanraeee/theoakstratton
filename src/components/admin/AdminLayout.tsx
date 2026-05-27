@@ -20,6 +20,8 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     { label: 'Orders', icon: '💳', path: '/admin/orders' },
     { label: 'Leads', icon: '👥', path: '/admin/leads' },
     { label: 'Waitlist', icon: '⏳', path: '/admin/waitlist' },
+    { label: 'Email Templates', icon: '✉️', path: '/admin/email-templates' },
+    { label: 'Email Campaigns', icon: '📨', path: '/admin/email-campaigns' },
     { label: 'Templates', icon: '📧', path: '/admin/templates' },
     { label: 'Email Tracking', icon: '📬', path: '/admin/email-tracking' },
     { label: 'Analytics', icon: '📈', path: '/admin/analytics' },

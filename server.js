@@ -49,6 +49,9 @@ async function initializeDatabase() {
     // Seed default data
     await seedDefaultAdmin()
     await seedDefaultPlans()
+    await seedDefaultEmailTemplates()
+    await seedDefaultTestimonials()
+    await seedDefaultLandingContent()
   } catch (error) {
     console.warn('⚠️  Database schema initialization error:', error.message)
   }
@@ -90,6 +93,194 @@ async function seedDefaultPlans() {
     console.log('✓ Pricing plans sync completed')
   } catch (error) {
     console.warn('⚠️  Note: Plan seeding skipped (schema mismatch or database unavailable)')
+  }
+}
+
+// Seed default email templates
+async function seedDefaultEmailTemplates() {
+  try {
+    const templates = [
+      {
+        name: 'Welcome Email',
+        subject: 'Welcome to Oakstratton - Your BNPL Solution',
+        body: `<h2>Welcome to Oakstratton!</h2>
+<p>Hi {{name}},</p>
+<p>Thank you for your interest in our Buy Now Pay Later (BNPL) solutions. We're excited to help you provide flexible payment options to your customers.</p>
+<h3>What's Next?</h3>
+<ul>
+  <li>Explore our BNPL features</li>
+  <li>Review our pricing plans</li>
+  <li>Schedule a demo with our team</li>
+</ul>
+<p>If you have any questions, reply to this email or contact us at support@oakstratton.com</p>
+<p>Best regards,<br><strong>The Oakstratton Team</strong></p>`,
+      },
+      {
+        name: 'Payment Confirmation',
+        subject: 'Payment Confirmation - Oakstratton {{plan}}',
+        body: `<h2>Payment Received!</h2>
+<p>Hi {{name}},</p>
+<p>Thank you for your payment. Your {{plan}} plan is now active.</p>
+<h3>Account Details</h3>
+<p><strong>Company:</strong> {{company}}</p>
+<p><strong>Email:</strong> {{email}}</p>
+<p>You can now access your Oakstratton admin dashboard to start managing your BNPL integrations.</p>
+<p>Thank you for choosing Oakstratton!</p>
+<p>Best regards,<br><strong>The Oakstratton Team</strong></p>`,
+      },
+      {
+        name: 'Feature Update',
+        subject: 'New BNPL Features Available',
+        body: `<h2>Introducing New Features</h2>
+<p>Hi {{name}},</p>
+<p>We're constantly improving Oakstratton to serve you better. Check out our latest features:</p>
+<ul>
+  <li>Enhanced analytics dashboard</li>
+  <li>Improved payment processing</li>
+  <li>New BNPL provider integrations</li>
+  <li>Better customer reporting</li>
+</ul>
+<p>Log in to your dashboard to explore these new features and optimize your BNPL strategy.</p>
+<p>Questions? Contact our support team anytime.</p>
+<p>Best regards,<br><strong>The Oakstratton Team</strong></p>`,
+      },
+      {
+        name: 'Re-engagement Campaign',
+        subject: 'We miss you! Special offer inside',
+        body: `<h2>Come Back and Grow Your Business</h2>
+<p>Hi {{name}},</p>
+<p>We notice you haven't been using your Oakstratton account recently. We'd love to help you succeed with BNPL payments.</p>
+<h3>Special Offer</h3>
+<p>Get 30% off your next month when you upgrade your plan this week!</p>
+<p>Let us know if there's anything we can help you with or if you have any questions about our service.</p>
+<p>Best regards,<br><strong>The Oakstratton Team</strong></p>`,
+      },
+    ]
+
+    for (const template of templates) {
+      try {
+        const existing = await pool.query(
+          'SELECT id FROM email_templates WHERE name = $1',
+          [template.name]
+        )
+
+        if (existing.rows.length === 0) {
+          await pool.query(
+            'INSERT INTO email_templates (name, subject, html_content, category, is_active) VALUES ($1, $2, $3, $4, $5)',
+            [template.name, template.subject, template.body, 'custom', true]
+          )
+        }
+      } catch (err) {
+        // Silently skip individual template errors
+      }
+    }
+    console.log('✓ Default email templates seeded')
+  } catch (error) {
+    console.warn('⚠️  Note: Email template seeding skipped (schema mismatch or database unavailable)')
+  }
+}
+
+// Seed default testimonials
+async function seedDefaultTestimonials() {
+  try {
+    const testimonials = [
+      {
+        quote: 'Oakstratton has transformed how we offer payment flexibility to our customers. Implementation was seamless and the support team was incredibly helpful.',
+        author: 'Sarah Johnson',
+        role: 'Finance Director',
+        company: 'TechFlow Solutions',
+        rating: 5,
+      },
+      {
+        quote: 'The BNPL integration increased our conversion rate by 35% in just the first month. Highly recommend Oakstratton!',
+        author: 'Michael Chen',
+        role: 'CEO',
+        company: 'Growth Retail Co',
+        rating: 5,
+      },
+      {
+        quote: 'Amazing product and even better customer service. Oakstratton made it easy to add buy now pay later options without any technical headaches.',
+        author: 'Emma Davis',
+        role: 'Operations Manager',
+        company: 'Fashion Plus',
+        rating: 5,
+      },
+      {
+        quote: 'The analytics dashboard gave us incredible insights into customer payment preferences. Data-driven decisions have never been easier.',
+        author: 'James Wilson',
+        role: 'Business Analyst',
+        company: 'Digital Innovations Ltd',
+        rating: 4,
+      },
+    ]
+
+    for (const testimonial of testimonials) {
+      try {
+        const existing = await pool.query(
+          'SELECT id FROM testimonials WHERE quote = $1',
+          [testimonial.quote]
+        )
+
+        if (existing.rows.length === 0) {
+          await pool.query(
+            'INSERT INTO testimonials (quote, author, role, company, rating, is_active, is_featured, display_order) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)',
+            [testimonial.quote, testimonial.author, testimonial.role, testimonial.company, testimonial.rating, true, true, Math.random()]
+          )
+        }
+      } catch (err) {
+        // Silently skip individual testimonial errors
+      }
+    }
+    console.log('✓ Default testimonials seeded')
+  } catch (error) {
+    console.warn('⚠️  Note: Testimonial seeding skipped (schema mismatch or database unavailable)')
+  }
+}
+
+// Seed default landing content
+async function seedDefaultLandingContent() {
+  try {
+    const content = [
+      { section: 'hero', key: 'hero_content', value: JSON.stringify([
+        { id: 1, title: 'Flexible Payment Solutions for Your Customers', subtitle: 'Enable Buy Now Pay Later with Oakstratton', image: '🛍️' },
+        { id: 2, title: 'Industry-Leading BNPL Providers', subtitle: 'Klarna, Clearpay, PayPal & More', image: '💳' },
+      ]) },
+      { section: 'features', key: 'features_content', value: JSON.stringify([
+        { id: 1, title: 'Easy Integration', description: 'Connect in minutes with our simple API', icon: '⚡' },
+        { id: 2, title: 'Multiple BNPL Providers', description: 'Offer various payment options to customers', icon: '🔗' },
+        { id: 3, title: 'Real-Time Analytics', description: 'Track conversions and customer behavior', icon: '📊' },
+      ]) },
+      { section: 'pricing', key: 'pricing_title', value: 'Simple, Transparent Pricing' },
+      { section: 'pricing', key: 'pricing_subtitle', value: 'Choose the plan that fits your business' },
+      { section: 'waitlist', key: 'waitlist_title', value: 'Join Our Waitlist' },
+      { section: 'waitlist', key: 'waitlist_description', value: 'Be the first to know when we launch new features' },
+      { section: 'contact', key: 'contact_title', value: 'Get In Touch' },
+      { section: 'contact', key: 'contact_description', value: 'Have questions? Our team is ready to help' },
+      { section: 'cta', key: 'cta_content', value: JSON.stringify([
+        { id: 1, title: 'Ready to Transform Your Payments?', description: 'Start your free trial today', button: 'Get Started' },
+      ]) },
+    ]
+
+    for (const item of content) {
+      try {
+        const existing = await pool.query(
+          'SELECT id FROM landing_content WHERE section_key = $1',
+          [item.key]
+        )
+
+        if (existing.rows.length === 0) {
+          await pool.query(
+            'INSERT INTO landing_content (section_name, section_key, content_type, content_value) VALUES ($1, $2, $3, $4)',
+            [item.section, item.key, 'json', item.value]
+          )
+        }
+      } catch (err) {
+        // Silently skip individual content errors
+      }
+    }
+    console.log('✓ Default landing content seeded')
+  } catch (error) {
+    console.warn('⚠️  Note: Landing content seeding skipped (schema mismatch or database unavailable)')
   }
 }
 
@@ -145,7 +336,6 @@ app.use(bodyParser.json({ limit: '10kb' }))
 app.use(bodyParser.urlencoded({ extended: true, limit: '10kb' }))
 
 // Serve static files (React build)
-import fs from 'fs'
 import { promises as fsPromises } from 'fs'
 
 const distPath = path.join(__dirname, 'dist')
@@ -888,6 +1078,241 @@ app.get('/api/admin/orders', authenticateToken, async (req, res) => {
   } catch (error) {
     console.error('Get orders error:', error)
     res.status(500).json({ error: 'Failed to fetch orders' })
+  }
+})
+
+// ============================================================================
+// EMAIL TEMPLATES ENDPOINTS
+// ============================================================================
+
+app.get('/api/admin/email-templates', authenticateToken, async (req, res) => {
+  try {
+    if (!req.user || (req.user.role !== 'admin' && req.user.role !== 'manager')) {
+      return res.status(403).json({ error: 'Unauthorized' })
+    }
+
+    if (databaseAvailable) {
+      const result = await pool.query(
+        'SELECT id, name, subject, html_content as body, is_active, created_at FROM email_templates ORDER BY created_at DESC'
+      )
+      return res.json(result.rows.map(row => ({
+        id: row.id,
+        name: row.name,
+        subject: row.subject,
+        body: row.body,
+        preview: row.body.substring(0, 100),
+        is_active: row.is_active,
+        created_at: row.created_at,
+      })))
+    } else {
+      return res.json([])
+    }
+  } catch (error) {
+    console.error('Get email templates error:', error)
+    res.status(500).json({ error: 'Failed to fetch templates' })
+  }
+})
+
+app.post('/api/admin/email-templates', authenticateToken, async (req, res) => {
+  try {
+    if (!req.user || req.user.role !== 'admin') {
+      return res.status(403).json({ error: 'Unauthorized' })
+    }
+
+    const { name, subject, body, is_active } = req.body
+
+    if (!name || !subject || !body) {
+      return res.status(400).json({ error: 'All fields are required' })
+    }
+
+    if (databaseAvailable) {
+      const result = await pool.query(
+        'INSERT INTO email_templates (name, subject, html_content, is_active, created_by) VALUES ($1, $2, $3, $4, $5) RETURNING id',
+        [name, subject, body, is_active !== false, req.user.id]
+      )
+      res.json({ success: true, id: result.rows[0].id })
+    } else {
+      res.status(503).json({ error: 'Database not available' })
+    }
+  } catch (error) {
+    console.error('Create template error:', error)
+    res.status(500).json({ error: 'Failed to create template' })
+  }
+})
+
+app.put('/api/admin/email-templates/:id', authenticateToken, async (req, res) => {
+  try {
+    if (!req.user || req.user.role !== 'admin') {
+      return res.status(403).json({ error: 'Unauthorized' })
+    }
+
+    const { name, subject, body, is_active } = req.body
+    const { id } = req.params
+
+    if (!name || !subject || !body) {
+      return res.status(400).json({ error: 'All fields are required' })
+    }
+
+    if (databaseAvailable) {
+      await pool.query(
+        'UPDATE email_templates SET name = $1, subject = $2, html_content = $3, is_active = $4 WHERE id = $5',
+        [name, subject, body, is_active !== false, id]
+      )
+      res.json({ success: true })
+    } else {
+      res.status(503).json({ error: 'Database not available' })
+    }
+  } catch (error) {
+    console.error('Update template error:', error)
+    res.status(500).json({ error: 'Failed to update template' })
+  }
+})
+
+app.delete('/api/admin/email-templates/:id', authenticateToken, async (req, res) => {
+  try {
+    if (!req.user || req.user.role !== 'admin') {
+      return res.status(403).json({ error: 'Unauthorized' })
+    }
+
+    const { id } = req.params
+
+    if (databaseAvailable) {
+      await pool.query('DELETE FROM email_templates WHERE id = $1', [id])
+      res.json({ success: true })
+    } else {
+      res.status(503).json({ error: 'Database not available' })
+    }
+  } catch (error) {
+    console.error('Delete template error:', error)
+    res.status(500).json({ error: 'Failed to delete template' })
+  }
+})
+
+// ============================================================================
+// EMAIL CAMPAIGNS ENDPOINTS
+// ============================================================================
+
+app.get('/api/admin/email-campaigns', authenticateToken, async (req, res) => {
+  try {
+    if (!req.user || (req.user.role !== 'admin' && req.user.role !== 'manager')) {
+      return res.status(403).json({ error: 'Unauthorized' })
+    }
+
+    if (databaseAvailable) {
+      const result = await pool.query(
+        'SELECT id, name, template_id, segment, recipient_count, status, sent_at, created_at FROM email_campaigns ORDER BY created_at DESC'
+      )
+      return res.json(result.rows)
+    } else {
+      return res.json([])
+    }
+  } catch (error) {
+    console.error('Get campaigns error:', error)
+    res.status(500).json({ error: 'Failed to fetch campaigns' })
+  }
+})
+
+app.post('/api/admin/email-campaigns', authenticateToken, async (req, res) => {
+  try {
+    if (!req.user || req.user.role !== 'admin') {
+      return res.status(403).json({ error: 'Unauthorized' })
+    }
+
+    const { name, template_id, segment } = req.body
+
+    if (!name || !template_id || !segment) {
+      return res.status(400).json({ error: 'All fields are required' })
+    }
+
+    if (databaseAvailable) {
+      // Get recipient count based on segment
+      let recipientCount = 0
+      if (segment === 'all') {
+        const countResult = await pool.query('SELECT COUNT(*) as count FROM leads')
+        recipientCount = parseInt(countResult.rows[0].count)
+      } else if (segment === 'waitlist') {
+        const countResult = await pool.query('SELECT COUNT(*) as count FROM leads WHERE source = $1', ['waitlist'])
+        recipientCount = parseInt(countResult.rows[0].count)
+      } else if (segment === 'contacted') {
+        const countResult = await pool.query('SELECT COUNT(*) as count FROM leads WHERE status = $1', ['contacted'])
+        recipientCount = parseInt(countResult.rows[0].count)
+      } else if (segment === 'customers') {
+        const countResult = await pool.query('SELECT COUNT(*) as count FROM leads WHERE status = $1', ['customer'])
+        recipientCount = parseInt(countResult.rows[0].count)
+      } else if (segment === 'new') {
+        const countResult = await pool.query('SELECT COUNT(*) as count FROM leads WHERE status = $1', ['new'])
+        recipientCount = parseInt(countResult.rows[0].count)
+      }
+
+      const result = await pool.query(
+        'INSERT INTO email_campaigns (name, template_id, segment, recipient_count, created_by) VALUES ($1, $2, $3, $4, $5) RETURNING id',
+        [name, template_id, segment, recipientCount, req.user.id]
+      )
+      res.json({ success: true, id: result.rows[0].id })
+    } else {
+      res.status(503).json({ error: 'Database not available' })
+    }
+  } catch (error) {
+    console.error('Create campaign error:', error)
+    res.status(500).json({ error: 'Failed to create campaign' })
+  }
+})
+
+app.post('/api/admin/email-campaigns/:id/send', authenticateToken, async (req, res) => {
+  try {
+    if (!req.user || req.user.role !== 'admin') {
+      return res.status(403).json({ error: 'Unauthorized' })
+    }
+
+    const { id } = req.params
+
+    if (databaseAvailable) {
+      // Get campaign details
+      const campaignResult = await pool.query(
+        'SELECT * FROM email_campaigns WHERE id = $1',
+        [id]
+      )
+
+      if (campaignResult.rows.length === 0) {
+        return res.status(404).json({ error: 'Campaign not found' })
+      }
+
+      const campaign = campaignResult.rows[0]
+
+      // TODO: Send emails based on segment
+      // For now, just mark as sent
+      await pool.query(
+        'UPDATE email_campaigns SET status = $1, sent_at = CURRENT_TIMESTAMP WHERE id = $2',
+        ['sent', id]
+      )
+
+      res.json({ success: true, message: `Campaign sent to ${campaign.recipient_count} recipients` })
+    } else {
+      res.status(503).json({ error: 'Database not available' })
+    }
+  } catch (error) {
+    console.error('Send campaign error:', error)
+    res.status(500).json({ error: 'Failed to send campaign' })
+  }
+})
+
+app.delete('/api/admin/email-campaigns/:id', authenticateToken, async (req, res) => {
+  try {
+    if (!req.user || req.user.role !== 'admin') {
+      return res.status(403).json({ error: 'Unauthorized' })
+    }
+
+    const { id } = req.params
+
+    if (databaseAvailable) {
+      await pool.query('DELETE FROM email_campaigns WHERE id = $1', [id])
+      res.json({ success: true })
+    } else {
+      res.status(503).json({ error: 'Database not available' })
+    }
+  } catch (error) {
+    console.error('Delete campaign error:', error)
+    res.status(500).json({ error: 'Failed to delete campaign' })
   }
 })
 

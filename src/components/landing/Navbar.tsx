@@ -1,17 +1,39 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
+import api from '@/services/api'
+
+interface NavLink {
+  id?: string
+  label: string
+  href: string
+  icon?: string
+}
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false)
-  const navigate = useNavigate()
-
-  const navLinks = [
+  const [navLinks, setNavLinks] = useState<NavLink[]>([
     { label: 'Features', href: '#features' },
-    { label: 'Providers', href: '#providers' },
     { label: 'Pricing', href: '#pricing' },
     { label: 'Contact', href: '#contact' },
-  ]
+  ])
+  const navigate = useNavigate()
+
+  useEffect(() => {
+    const fetchNavMenu = async () => {
+      try {
+        const response = await api.get('/api/navigation-menu')
+        if (response.data && Array.isArray(response.data)) {
+          setNavLinks(response.data)
+        }
+      } catch (error) {
+        console.error('Failed to fetch navigation menu:', error)
+        // Keep default nav links on error
+      }
+    }
+
+    fetchNavMenu()
+  }, [])
 
   return (
     <motion.nav

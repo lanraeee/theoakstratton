@@ -17,6 +17,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     { label: 'Dashboard', icon: '📊', path: '/admin/dashboard' },
     { label: 'Users', icon: '👤', path: '/admin/users' },
     { label: 'Content', icon: '📝', path: '/admin/content' },
+    { label: 'Menu', icon: '🔗', path: '/admin/menu' },
     { label: 'Orders', icon: '💳', path: '/admin/orders' },
     { label: 'Leads', icon: '👥', path: '/admin/leads' },
     { label: 'Waitlist', icon: '⏳', path: '/admin/waitlist' },

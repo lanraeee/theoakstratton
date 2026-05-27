@@ -23,6 +23,7 @@ import ContentManagementPage from './pages/Admin/ContentManagementPage'
 import OrdersManagementPage from './pages/Admin/OrdersManagementPage'
 import EmailTemplatesPage from './pages/Admin/EmailTemplatesPage'
 import EmailCampaignsPage from './pages/Admin/EmailCampaignsPage'
+import NavMenuManagementPage from './pages/Admin/NavMenuManagementPage'
 import NotFoundPage from './pages/NotFound'
 
 function App() {
@@ -101,6 +102,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <EmailCampaignsPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/menu"
+              element={
+                <ProtectedRoute>
+                  <NavMenuManagementPage />
                 </ProtectedRoute>
               }
             />

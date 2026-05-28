@@ -15,14 +15,6 @@ interface WaitlistLead {
 }
 
 const WAITLIST_LEADS: WaitlistLead[] = [
-  { id: '1', email: 'john@example.com', name: 'John Smith', company: 'Acme Corp', joinedDate: '2024-05-01', lastSeen: '2024-05-22', status: 'active', engagementScore: 85 },
-  { id: '2', email: 'sarah@test.com', name: 'Sarah Johnson', company: 'Tech Inc', joinedDate: '2024-04-15', lastSeen: '2024-05-20', status: 'active', engagementScore: 72 },
-  { id: '3', email: 'mike@business.com', name: 'Mike Chen', company: 'Design Co', joinedDate: '2024-03-20', lastSeen: '2024-04-10', status: 'dormant', engagementScore: 35 },
-  { id: '4', email: 'emma@startup.io', name: 'Emma Davis', company: 'Startup LLC', joinedDate: '2024-02-01', lastSeen: '2024-05-22', status: 'converted', engagementScore: 95 },
-  { id: '5', email: 'alex@company.com', name: 'Alex Brown', company: 'Corp Solutions', joinedDate: '2024-05-10', lastSeen: '2024-05-21', status: 'active', engagementScore: 68 },
-  { id: '6', email: 'lisa@innovation.com', name: 'Lisa Wang', company: 'Innovation Lab', joinedDate: '2024-03-01', lastSeen: '2024-03-15', status: 'dormant', engagementScore: 28 },
-  { id: '7', email: 'tom@retail.com', name: 'Tom Harris', company: 'Retail Plus', joinedDate: '2024-01-15', lastSeen: '2024-05-22', status: 'converted', engagementScore: 92 },
-  { id: '8', email: 'jess@fashion.com', name: 'Jessica Lee', company: 'Fashion Boutique', joinedDate: '2024-04-22', lastSeen: '2024-05-19', status: 'active', engagementScore: 78 },
 ]
 
 export default function WaitlistPage() {

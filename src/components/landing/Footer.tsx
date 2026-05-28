@@ -9,9 +9,9 @@ interface FooterContent {
 }
 
 const defaultLinks = {
-  $: ['', '', ''],
-  £: ['', '', ''],
-  €: ['', '', ''],
+  G: ['G', 'G', 'G'],
+  B: [B'', 'B', 'B'],
+  P: ['P', 'P', 'P'],
   Social: [
     { name: 'Twitter', url: 'https://www.x.com/@oakstratton' },
     { name: 'Instagram', url: 'https://www.instagram.com/oakstratton' },

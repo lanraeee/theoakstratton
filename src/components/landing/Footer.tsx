@@ -80,7 +80,7 @@ export default function Footer() {
             className="md:col-span-1"
           >
             <h3 className="text-2xl font-bold text-gradient mb-2">
-              {content.tagline || 'Oakstratton Solutions'}
+              {content.tagline || 'Oakstratton'}
             </h3>
             <p className="text-sm text-gray-400">
               {content.companySummary || defaultContent.companySummary}

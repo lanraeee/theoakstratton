@@ -10,8 +10,8 @@ interface FooterContent {
 
 const defaultLinks = {
   Social: [
-    { name: 'Twitter', url: 'www.x.com/@oakstratton' },
-    { name: 'Instagram', url: 'www.instagram.com/oakstratton' },
+    { name: 'Twitter', url: 'https://www.x.com/@oakstratton' },
+    { name: 'Instagram', url: 'https://www.instagram.com/oakstratton' },
     { name: 'Email', url: 'mailto:oakstratton@belloite.co.uk' },
   ],
 }
@@ -19,7 +19,7 @@ const defaultLinks = {
 const defaultContent: FooterContent = {
   tagline: 'Oakstratton Solutions',
   companySummary: 'Providing bespoke BNPL payment integration tailored to optimize business operations for up orth profitability.',
-  madeWithText: 'Made with ❤️ by <a href= "https://www.belloite.co.uk" target = "_blank"> Belloite Holdings </a>. Helping small businesses compete globally.',
+  madeWithText: 'Made with ❤️ by Belloite Holdings. Helping small businesses compete globally.',
 }
 
 export default function Footer() {

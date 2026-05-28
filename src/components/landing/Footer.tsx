@@ -9,21 +9,21 @@ interface FooterContent {
 }
 
 const defaultLinks = {
-  Product: ['Features', 'Pricing', 'Providers', 'Security'],
+ <!-- Product: ['Features', 'Pricing', 'Providers', 'Security'],
   Company: ['About', 'Blog', 'Careers', 'Contact'],
-  Legal: ['Privacy', 'Terms', 'Cookies', 'Compliance'],
+  Legal: ['Privacy', 'Terms', 'Cookies', 'Compliance'], -->
   Social: [
     { name: 'LinkedIn', url: '#' },
     { name: 'Twitter', url: '#' },
     { name: 'Instagram', url: '#' },
-    { name: 'Email', url: 'mailto:support@oakstratton.com' },
+    { name: 'Email', url: 'mailto:oakstratton@belloite.co.uk' },
   ],
 }
 
 const defaultContent: FooterContent = {
-  tagline: 'Oakstratton',
-  companySummary: 'Helping small businesses grow with modern BNPL solutions',
-  madeWithText: 'Made with ❤️ by Oakstratton. Helping small businesses compete globally.',
+  tagline: 'Oakstratton Solutions',
+  companySummary: 'Providing bespoke BNPL payment integration tailored to optimize business operations for up orth profitability.',
+  madeWithText: 'Made with ❤️ by <a href= "https://www.belloite.co.uk" target = "_blank"> Belloite Holdings </a>. Helping small businesses compete globally.',
 }
 
 export default function Footer() {

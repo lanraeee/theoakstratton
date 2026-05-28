@@ -9,9 +9,9 @@ interface FooterContent {
 }
 
 const defaultLinks = {
- <!-- Product: ['Features', 'Pricing', 'Providers', 'Security'],
+  Product: ['Features', 'Pricing', 'Providers', 'Security'],
   Company: ['About', 'Blog', 'Careers', 'Contact'],
-  Legal: ['Privacy', 'Terms', 'Cookies', 'Compliance'], -->
+  Legal: ['Privacy', 'Terms', 'Cookies', 'Compliance'],
   Social: [
     { name: 'Twitter', url: 'www.x.com/@oakstratton' },
     { name: 'Instagram', url: 'www.instagram.com/oakstratton' },

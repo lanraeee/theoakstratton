@@ -13,16 +13,16 @@ const defaultLinks = {
   Company: ['About', 'Blog', 'Careers', 'Contact'],
   Legal: ['Privacy', 'Terms', 'Cookies', 'Compliance'],
   Social: [
-    { name: 'Twitter', url: 'www.x.com/@oakstratton' },
-    { name: 'Instagram', url: 'www.instagram.com/oakstratton' },
+    { name: 'Twitter', url: 'https://www.x.com/@oakstratton' },
+    { name: 'Instagram', url: 'https://www.instagram.com/oakstratton' },
     { name: 'Email', url: 'mailto:oakstratton@belloite.co.uk' },
   ],
 }
 
 const defaultContent: FooterContent = {
   tagline: 'Oakstratton Solutions',
-  companySummary: 'Providing bespoke BNPL payment integration tailored to optimize business operations for up orth profitability.',
-  madeWithText: 'Made with ❤️ by <a href= "https://www.belloite.co.uk" target = "_blank"> Belloite Holdings </a>. Helping small businesses compete globally.',
+  companySummary: 'Providing bespoke BNPL payment integration tailored to optimize business operations for up north profitability.',
+  madeWithText: 'Made with ❤️ by Belloite Holdings. Helping small businesses compete globally.',
 }
 
 export default function Footer() {
@@ -124,7 +124,7 @@ export default function Footer() {
         {/* Divider */}
         <div className="border-t border-gray-800 pt-8">
           <p className="text-sm text-gray-400 text-center">
-            © {currentYear} Oakstratton Solutions (Belloite Ltd). All rights reserved.
+            © {currentYear} Oakstratton Solutions. All rights reserved.
           </p>
         </div>
 

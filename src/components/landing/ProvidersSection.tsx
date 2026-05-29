@@ -87,49 +87,42 @@ export default function ProvidersSection() {
               variants={itemVariants}
               whileHover={{
                 y: -12,
-                boxShadow: '0 30px 60px rgba(0,0,0,0.15)',
+                boxShadow: '0 30px 60px rgba(0,0,0,0.2)',
               }}
-              className="card p-8 border-2 border-transparent hover:border-primary-200 transition-all group relative overflow-hidden"
+              className="card p-8 border-2 border-gray-200 hover:border-transparent transition-all group relative overflow-hidden cursor-pointer"
             >
               {/* Gradient background on hover */}
               <motion.div
                 initial={{ opacity: 0 }}
                 whileHover={{ opacity: 1 }}
+                transition={{ duration: 0.3 }}
                 className={`absolute inset-0 bg-gradient-to-br ${provider.color} -z-10`}
               />
 
               <div className="relative z-10">
-                <h3 className="text-2xl font-bold text-dark mb-2 group-hover:text-white transition-colors">
+                <h3 className="text-2xl font-bold text-dark group-hover:text-white transition-all duration-300 mb-2">
                   {provider.name}
                 </h3>
 
                 <div className="mb-6">
-                  <div className="text-3xl font-bold text-primary-500 group-hover:text-white transition-colors mb-2">
+                  <div className="text-3xl font-bold text-primary-500 group-hover:text-white transition-all duration-300 mb-2">
                     {provider.fee}
                   </div>
-                  <p className="text-sm text-gray-600 group-hover:text-gray-100 transition-colors">
+                  <p className="text-sm text-gray-600 group-hover:text-white transition-all duration-300">
                     {provider.terms}
                   </p>
                 </div>
 
                 <div className="flex items-center gap-2 mb-4">
                   <span className="text-2xl">👥</span>
-                  <span className="text-sm text-gray-600 group-hover:text-gray-100 transition-colors">
+                  <span className="text-sm text-gray-600 group-hover:text-white transition-all duration-300">
                     {provider.users} users
                   </span>
                 </div>
 
-                <p className="text-gray-600 group-hover:text-gray-100 transition-colors text-sm mb-6">
+                <p className="text-gray-600 group-hover:text-white transition-colors text-sm">
                   {provider.description}
                 </p>
-
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  className="w-full btn btn-primary bg-primary-500 text-white hover:bg-primary-600"
-                >
-                  Learn More
-                </motion.button>
               </div>
             </motion.div>
           ))}

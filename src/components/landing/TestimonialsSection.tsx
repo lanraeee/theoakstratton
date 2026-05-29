@@ -173,8 +173,8 @@ export default function TestimonialsSection() {
           className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-8 p-12 bg-gradient-to-r from-primary-500 to-secondary-500 rounded-2xl text-white"
         >
           {[
-            { value: '150+', label: 'Businesses Helped' },
-            { value: '£2M+', label: 'Revenue Increased' },
+            { value: '89+', label: 'Businesses Helped' },
+            { value: '£100k+', label: 'Revenue Increased' },
             { value: '98%', label: 'Customer Satisfaction' },
           ].map((stat, idx) => (
             <motion.div

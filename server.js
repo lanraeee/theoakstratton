@@ -900,7 +900,7 @@ app.put('/api/admin/landing-content/:sectionKey', authenticateToken, async (req,
     if (databaseAvailable) {
       const valueStr = typeof contentValue === 'string' ? contentValue : JSON.stringify(contentValue)
       await pool.query(
-        'INSERT INTO landing_content (section_name, section_key, content_type, content_value, updated_by) VALUES ($1, $2, $3, $4, $5) ON CONFLICT (section_key) DO UPDATE SET content_value = $4, updated_by = $5, updated_at = CURRENT_TIMESTAMP, version = version + 1',
+        'INSERT INTO landing_content (section_name, section_key, content_type, content_value, updated_by) VALUES ($1, $2, $3, $4, $5) ON CONFLICT (section_key) DO UPDATE SET content_value = $4, updated_by = $5, updated_at = CURRENT_TIMESTAMP, version = landing_content.version + 1',
         [sectionName, sectionKey, contentType, valueStr, req.user.id]
       )
       return res.json({ success: true })

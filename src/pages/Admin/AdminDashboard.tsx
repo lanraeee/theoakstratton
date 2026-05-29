@@ -186,13 +186,14 @@ function BrandingEditor({ content, onSave }: any) {
       })
 
       if (response.data.url) {
-        if (fileType === 'logo') {
-          setBranding({ ...branding, logoUrl: response.data.url, logoType: 'image' })
-          success('Logo uploaded successfully')
-        } else {
-          setBranding({ ...branding, faviconUrl: response.data.url })
-          success('Favicon uploaded successfully')
-        }
+        const updatedBranding = fileType === 'logo'
+          ? { ...branding, logoUrl: response.data.url, logoType: 'image' }
+          : { ...branding, faviconUrl: response.data.url }
+
+        setBranding(updatedBranding)
+        success(`${fileType === 'logo' ? 'Logo' : 'Favicon'} uploaded successfully`)
+
+        await onSave('branding', updatedBranding)
       }
     } catch (err: any) {
       error(err.response?.data?.error || 'Upload failed')

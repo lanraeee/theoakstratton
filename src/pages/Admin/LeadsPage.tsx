@@ -11,9 +11,11 @@ interface Lead {
   email: string
   company: string
   phone: string
+  notes?: string
   source: 'waitlist' | 'contact' | 'payment'
   status: 'new' | 'contacted' | 'qualified' | 'customer'
-  date: string
+  created_at?: string
+  date?: string
 }
 
 const MOCK_LEADS: Lead[] = [
@@ -217,6 +219,8 @@ export default function LeadsPage() {
                   <th className="px-6 py-4 text-left font-semibold text-gray-600">Name</th>
                   <th className="px-6 py-4 text-left font-semibold text-gray-600">Email</th>
                   <th className="px-6 py-4 text-left font-semibold text-gray-600">Company</th>
+                  <th className="px-6 py-4 text-left font-semibold text-gray-600">Phone</th>
+                  <th className="px-6 py-4 text-left font-semibold text-gray-600">Message</th>
                   <th className="px-6 py-4 text-left font-semibold text-gray-600">Source</th>
                   <th className="px-6 py-4 text-left font-semibold text-gray-600">Status</th>
                   <th className="px-6 py-4 text-left font-semibold text-gray-600">Date</th>
@@ -244,6 +248,10 @@ export default function LeadsPage() {
                     <td className="px-6 py-4 font-medium text-dark">{lead.name}</td>
                     <td className="px-6 py-4 text-gray-600 text-sm">{lead.email}</td>
                     <td className="px-6 py-4 text-gray-600">{lead.company}</td>
+                    <td className="px-6 py-4 text-gray-600 text-sm">{lead.phone || '-'}</td>
+                    <td className="px-6 py-4 text-gray-600 text-sm max-w-xs truncate" title={lead.notes}>
+                      {lead.notes || '-'}
+                    </td>
                     <td className="px-6 py-4">
                       <span className="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-800 capitalize">
                         {lead.source}
@@ -254,7 +262,7 @@ export default function LeadsPage() {
                         {lead.status.charAt(0).toUpperCase() + lead.status.slice(1)}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-gray-600 text-sm">{lead.date}</td>
+                    <td className="px-6 py-4 text-gray-600 text-sm">{lead.date || lead.created_at?.split('T')[0] || '-'}</td>
                     <td className="px-6 py-4 text-right">
                       <motion.button
                         whileHover={{ scale: 1.1 }}

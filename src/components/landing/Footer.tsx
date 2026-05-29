@@ -126,15 +126,13 @@ export default function Footer() {
                     }}
                   >
                     {social.name === 'Twitter' && (
-                      <svg className="w-6 h-6 text-[#1DA1F2] group-hover:text-white transition-colors" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M23 3a10.9 10.9 0 01-3.14 1.53 4.48 4.48 0 00-7.86 3v1A10.66 10.66 0 013 4s-4 9 5 13a11.64 11.64 0 01-7 2s9 5 20 5a9.5 9.5 0 00-9-5.5c4.75 2.25 7-7 7-7a10.6 10.6 0 01-9.8 7C2 15.5-1 8 3 5c3.6 3.1 7 3 7 3a10.9 10.9 0 01-2-10z" />
+                      <svg className="w-6 h-6 text-sky-400 group-hover:text-white transition-colors" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24h-6.654l-5.21-6.817L2.306 21.75H-1.25l7.73-8.835L-2.031 2.25h6.826l4.821 6.379L18.244 2.25zM17.831 19.77h1.634L6.888 4.596H5.117L17.831 19.77z" />
                       </svg>
                     )}
                     {social.name === 'Instagram' && (
-                      <svg className="w-6 h-6 text-transparent bg-gradient-to-r from-[#f09433] via-[#e6683c] to-[#dc2743] bg-clip-text fill-current group-hover:from-white group-hover:via-white group-hover:to-white transition-all" viewBox="0 0 24 24">
-                        <rect x="2" y="2" width="20" height="20" rx="5" ry="5" fill="none" stroke="currentColor" strokeWidth="2"/>
-                        <circle cx="12" cy="12" r="3" fill="currentColor"/>
-                        <circle cx="18" cy="6" r="1.5" fill="currentColor"/>
+                      <svg className="w-6 h-6 text-pink-500 group-hover:text-white transition-colors" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.266.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zM5.838 12a6.162 6.162 0 1 1 12.324 0 6.162 6.162 0 0 1-12.324 0zM12 16a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm4.965-10.322a1.44 1.44 0 1 1 2.881.001 1.44 1.44 0 0 1-2.881-.001z" />
                       </svg>
                     )}
                     {social.name === 'Email' && (

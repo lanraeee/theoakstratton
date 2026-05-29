@@ -85,45 +85,97 @@ export default function ProvidersSection() {
             <motion.div
               key={idx}
               variants={itemVariants}
-              whileHover={{
-                y: -12,
-                boxShadow: '0 30px 60px rgba(0,0,0,0.2)',
-              }}
-              className="card p-8 border-2 border-gray-200 hover:border-transparent transition-all group relative overflow-hidden cursor-pointer"
+              whileHover="hover"
+              className="card p-8 border-2 border-gray-200 relative overflow-hidden cursor-pointer h-full"
+              initial="initial"
             >
               {/* Gradient background on hover */}
               <motion.div
-                initial={{ opacity: 0 }}
-                whileHover={{ opacity: 1 }}
-                transition={{ duration: 0.3 }}
                 className={`absolute inset-0 bg-gradient-to-br ${provider.color} -z-10`}
+                variants={{
+                  initial: { opacity: 0 },
+                  hover: { opacity: 1 },
+                }}
+                transition={{ duration: 0.4 }}
               />
 
-              <div className="relative z-10">
-                <h3 className="text-2xl font-bold text-dark group-hover:text-white transition-all duration-300 mb-2">
+              {/* Hover lift effect */}
+              <motion.div
+                className="absolute inset-0 -z-20"
+                variants={{
+                  initial: { boxShadow: '0 4px 6px rgba(0,0,0,0.07)' },
+                  hover: { boxShadow: '0 20px 40px rgba(0,0,0,0.2)' },
+                }}
+                transition={{ duration: 0.3 }}
+              />
+
+              <motion.div
+                className="relative z-10"
+                variants={{
+                  initial: { y: 0 },
+                  hover: { y: -8 },
+                }}
+                transition={{ duration: 0.3 }}
+              >
+                <motion.h3
+                  className="text-2xl font-bold text-dark mb-2"
+                  variants={{
+                    initial: { color: '#1a1a2e' },
+                    hover: { color: '#ffffff' },
+                  }}
+                  transition={{ duration: 0.2 }}
+                >
                   {provider.name}
-                </h3>
+                </motion.h3>
 
                 <div className="mb-6">
-                  <div className="text-3xl font-bold text-primary-500 group-hover:text-white transition-all duration-300 mb-2">
+                  <motion.div
+                    className="text-3xl font-bold text-primary-500 mb-2"
+                    variants={{
+                      initial: { color: '#005EB8' },
+                      hover: { color: '#ffffff' },
+                    }}
+                    transition={{ duration: 0.2 }}
+                  >
                     {provider.fee}
-                  </div>
-                  <p className="text-sm text-gray-600 group-hover:text-white transition-all duration-300">
+                  </motion.div>
+                  <motion.p
+                    className="text-sm text-gray-600"
+                    variants={{
+                      initial: { color: '#4b5563' },
+                      hover: { color: '#ffffff' },
+                    }}
+                    transition={{ duration: 0.2 }}
+                  >
                     {provider.terms}
-                  </p>
+                  </motion.p>
                 </div>
 
                 <div className="flex items-center gap-2 mb-4">
                   <span className="text-2xl">👥</span>
-                  <span className="text-sm text-gray-600 group-hover:text-white transition-all duration-300">
+                  <motion.span
+                    className="text-sm text-gray-600"
+                    variants={{
+                      initial: { color: '#4b5563' },
+                      hover: { color: '#ffffff' },
+                    }}
+                    transition={{ duration: 0.2 }}
+                  >
                     {provider.users} users
-                  </span>
+                  </motion.span>
                 </div>
 
-                <p className="text-gray-600 group-hover:text-white transition-colors text-sm">
+                <motion.p
+                  className="text-sm text-gray-600"
+                  variants={{
+                    initial: { color: '#4b5563' },
+                    hover: { color: '#ffffff' },
+                  }}
+                  transition={{ duration: 0.2 }}
+                >
                   {provider.description}
-                </p>
-              </div>
+                </motion.p>
+              </motion.div>
             </motion.div>
           ))}
         </motion.div>

@@ -77,29 +77,6 @@ export default function CTASection() {
             {content.description}
           </p>
 
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.2, duration: 0.6 }}
-            className="flex flex-col md:flex-row gap-4 justify-center"
-          >
-            <motion.button
-              whileHover={{ scale: 1.05, boxShadow: '0 20px 40px rgba(255,199,44,0.3)' }}
-              whileTap={{ scale: 0.95 }}
-              className="btn btn-lg bg-accent-500 text-dark hover:bg-accent-600 font-bold"
-            >
-              {content.primaryButtonText || 'Get Early Access'}
-            </motion.button>
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="btn btn-lg border-2 border-white text-white hover:bg-white/10"
-            >
-              {content.secondaryButtonText || 'Schedule a Demo'}
-            </motion.button>
-          </motion.div>
-
           {content.offerText && (
             <motion.div
               initial={{ opacity: 0 }}

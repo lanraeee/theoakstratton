@@ -11,12 +11,15 @@ interface DashboardContent {
   testimonials?: any[]
   pricing?: any
   footer?: any
+  waitlist?: any
+  contact?: any
+  branding?: any
 }
 
 export default function AdminDashboard() {
   const [content, setContent] = useState<DashboardContent>({})
   const [loading, setLoading] = useState(true)
-  const [activeTab, setActiveTab] = useState('hero')
+  const [activeTab, setActiveTab] = useState('branding')
   const [saving, setSaving] = useState(false)
   const { success, error } = useAlert()
 
@@ -32,6 +35,7 @@ export default function AdminDashboard() {
 
       const parsed: DashboardContent = {}
 
+      // Parse all content sections
       if (data.hero_content) {
         try {
           parsed.hero = JSON.parse(data.hero_content)
@@ -76,6 +80,40 @@ export default function AdminDashboard() {
           parsed.footer = JSON.parse(data.footer_content)
         } catch (e) {
           parsed.footer = {}
+        }
+      }
+
+      if (data.waitlist_title || data.waitlist_description) {
+        parsed.waitlist = {
+          title: data.waitlist_title,
+          description: data.waitlist_description,
+        }
+      }
+
+      if (data.contact_title || data.contact_description) {
+        parsed.contact = {
+          title: data.contact_title,
+          description: data.contact_description,
+        }
+      }
+
+      if (data.branding) {
+        try {
+          parsed.branding = JSON.parse(data.branding)
+        } catch (e) {
+          parsed.branding = {
+            logoType: 'text',
+            logoText: 'Oakstratton',
+            logoUrl: '',
+            faviconUrl: '',
+          }
+        }
+      } else {
+        parsed.branding = {
+          logoType: 'text',
+          logoText: 'Oakstratton',
+          logoUrl: '',
+          faviconUrl: '',
         }
       }
 
@@ -125,38 +163,151 @@ export default function AdminDashboard() {
 
         {/* Tab Navigation */}
         <div className="flex flex-wrap gap-2 p-4 bg-white rounded-lg border border-gray-200 overflow-x-auto">
-          {['hero', 'features', 'providers', 'testimonials', 'pricing', 'footer'].map((tab) => (
+          {[
+            { id: 'branding', label: '🎨 Branding', icon: '🎨' },
+            { id: 'hero', label: '🎯 Hero Slider', icon: '🎯' },
+            { id: 'features', label: '✨ Features', icon: '✨' },
+            { id: 'providers', label: '💳 Providers', icon: '💳' },
+            { id: 'testimonials', label: '⭐ Testimonials', icon: '⭐' },
+            { id: 'pricing', label: '💰 Pricing', icon: '💰' },
+            { id: 'waitlist', label: '📧 Waitlist', icon: '📧' },
+            { id: 'contact', label: '💬 Contact', icon: '💬' },
+            { id: 'footer', label: '🔗 Footer', icon: '🔗' },
+          ].map((tab) => (
             <motion.button
-              key={tab}
+              key={tab.id}
               whileHover={{ scale: 1.05 }}
-              onClick={() => setActiveTab(tab)}
+              onClick={() => setActiveTab(tab.id)}
               className={`px-6 py-2 rounded-lg font-semibold whitespace-nowrap transition-all capitalize ${
-                activeTab === tab
+                activeTab === tab.id
                   ? 'bg-primary-500 text-white'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
             >
-              {tab === 'hero' ? '🎯 Hero Slider' : null}
-              {tab === 'features' ? '✨ Features' : null}
-              {tab === 'providers' ? '💳 Providers' : null}
-              {tab === 'testimonials' ? '⭐ Testimonials' : null}
-              {tab === 'pricing' ? '💰 Pricing' : null}
-              {tab === 'footer' ? '🔗 Footer' : null}
+              {tab.label}
             </motion.button>
           ))}
         </div>
 
         {/* Content Sections */}
         <div className="space-y-6">
+          {activeTab === 'branding' && <BrandingEditor content={content.branding} onSave={saveContent} />}
           {activeTab === 'hero' && <HeroEditor content={content.hero} onSave={saveContent} />}
           {activeTab === 'features' && <FeaturesEditor content={content.features} onSave={saveContent} />}
           {activeTab === 'providers' && <ProvidersEditor content={content.providers} onSave={saveContent} />}
           {activeTab === 'testimonials' && <TestimonialsEditor content={content.testimonials} onSave={saveContent} />}
           {activeTab === 'pricing' && <PricingEditor content={content.pricing} onSave={saveContent} />}
+          {activeTab === 'waitlist' && <WaitlistEditor content={content.waitlist} onSave={saveContent} />}
+          {activeTab === 'contact' && <ContactEditor content={content.contact} onSave={saveContent} />}
           {activeTab === 'footer' && <FooterEditor content={content.footer} onSave={saveContent} />}
         </div>
       </motion.div>
     </AdminLayout>
+  )
+}
+
+// Branding Editor
+function BrandingEditor({ content, onSave }: any) {
+  const [branding, setBranding] = useState(content || { logoType: 'text', logoText: 'Oakstratton', logoUrl: '', faviconUrl: '' })
+
+  return (
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Logo Settings */}
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="card p-6">
+          <h2 className="text-2xl font-bold text-dark mb-6">Logo Settings</h2>
+
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-3">Logo Type</label>
+              <div className="flex gap-3">
+                {['text', 'image'].map((type) => (
+                  <button
+                    key={type}
+                    onClick={() => setBranding({ ...branding, logoType: type })}
+                    className={`flex-1 px-4 py-2 rounded-lg font-semibold capitalize transition-all ${
+                      branding.logoType === type
+                        ? 'bg-primary-500 text-white'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    {type === 'text' ? '📝' : '🖼️'} {type}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {branding.logoType === 'text' ? (
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Logo Text</label>
+                <input
+                  type="text"
+                  value={branding.logoText}
+                  onChange={(e) => setBranding({ ...branding, logoText: e.target.value })}
+                  placeholder="Enter logo text"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                />
+                <div className="mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                  <p className="text-xs text-gray-600 mb-2">Preview:</p>
+                  <div className="text-3xl font-bold text-gradient">{branding.logoText}</div>
+                </div>
+              </div>
+            ) : (
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Logo Image URL</label>
+                <input
+                  type="text"
+                  value={branding.logoUrl}
+                  onChange={(e) => setBranding({ ...branding, logoUrl: e.target.value })}
+                  placeholder="https://example.com/logo.png"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                />
+                {branding.logoUrl && (
+                  <div className="mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                    <p className="text-xs text-gray-600 mb-2">Preview:</p>
+                    <img src={branding.logoUrl} alt="Logo" className="h-16 object-contain" />
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </motion.div>
+
+        {/* Favicon Settings */}
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="card p-6">
+          <h2 className="text-2xl font-bold text-dark mb-6">Favicon Settings</h2>
+
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Favicon URL</label>
+              <input
+                type="text"
+                value={branding.faviconUrl}
+                onChange={(e) => setBranding({ ...branding, faviconUrl: e.target.value })}
+                placeholder="https://example.com/favicon.ico"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+              />
+              <p className="text-xs text-gray-500 mt-2">Use a 32x32 PNG or ICO file for best results</p>
+            </div>
+
+            {branding.faviconUrl && (
+              <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                <p className="text-xs text-gray-600 mb-2">Preview:</p>
+                <img src={branding.faviconUrl} alt="Favicon" className="w-8 h-8 object-contain" />
+              </div>
+            )}
+          </div>
+        </motion.div>
+      </div>
+
+      <motion.button
+        whileHover={{ scale: 1.05 }}
+        onClick={() => onSave('branding', branding)}
+        className="btn btn-primary w-full"
+      >
+        Save Branding Settings
+      </motion.button>
+    </motion.div>
   )
 }
 
@@ -484,7 +635,7 @@ function TestimonialsEditor({ content, onSave }: any) {
                       updated[idx].rating = i + 1
                       setTestimonials(updated)
                     }}
-                    className={`text-2xl ${i < testimonial.rating ? '⭐' : '☆'}`}
+                    className="text-2xl"
                   >
                     {i < testimonial.rating ? '⭐' : '☆'}
                   </button>
@@ -580,6 +731,94 @@ function PricingEditor({ content, onSave }: any) {
         className="mt-6 btn btn-primary w-full"
       >
         Save Pricing
+      </motion.button>
+    </motion.div>
+  )
+}
+
+// Waitlist Editor
+function WaitlistEditor({ content, onSave }: any) {
+  const [waitlist, setWaitlist] = useState(content || { title: '', description: '' })
+
+  return (
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="card p-6 max-w-2xl">
+      <h2 className="text-2xl font-bold text-dark mb-6">Waitlist Section</h2>
+      <div className="space-y-4">
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-2">Section Title</label>
+          <input
+            type="text"
+            value={waitlist.title}
+            onChange={(e) => setWaitlist({ ...waitlist, title: e.target.value })}
+            placeholder="Enter title"
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-2">Description</label>
+          <textarea
+            value={waitlist.description}
+            onChange={(e) => setWaitlist({ ...waitlist, description: e.target.value })}
+            placeholder="Enter description"
+            rows={3}
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none"
+          />
+        </div>
+      </div>
+
+      <motion.button
+        whileHover={{ scale: 1.05 }}
+        onClick={() => {
+          onSave('waitlist_title', waitlist.title)
+          onSave('waitlist_description', waitlist.description)
+        }}
+        className="mt-6 btn btn-primary w-full"
+      >
+        Save Waitlist
+      </motion.button>
+    </motion.div>
+  )
+}
+
+// Contact Editor
+function ContactEditor({ content, onSave }: any) {
+  const [contact, setContact] = useState(content || { title: '', description: '' })
+
+  return (
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="card p-6 max-w-2xl">
+      <h2 className="text-2xl font-bold text-dark mb-6">Contact Section</h2>
+      <div className="space-y-4">
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-2">Section Title</label>
+          <input
+            type="text"
+            value={contact.title}
+            onChange={(e) => setContact({ ...contact, title: e.target.value })}
+            placeholder="Enter title"
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-2">Description</label>
+          <textarea
+            value={contact.description}
+            onChange={(e) => setContact({ ...contact, description: e.target.value })}
+            placeholder="Enter description"
+            rows={3}
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none"
+          />
+        </div>
+      </div>
+
+      <motion.button
+        whileHover={{ scale: 1.05 }}
+        onClick={() => {
+          onSave('contact_title', contact.title)
+          onSave('contact_description', contact.description)
+        }}
+        className="mt-6 btn btn-primary w-full"
+      >
+        Save Contact
       </motion.button>
     </motion.div>
   )

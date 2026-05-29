@@ -11,7 +11,7 @@ interface Lead {
   email: string
   company: string
   phone: string
-  notes?: string
+  notes: string
   source: 'waitlist' | 'contact' | 'payment'
   status: 'new' | 'contacted' | 'qualified' | 'customer'
   created_at?: string
@@ -235,9 +235,10 @@ export default function LeadsPage() {
                     animate={{ opacity: 1 }}
                     transition={{ delay: idx * 0.05 }}
                     whileHover={{ backgroundColor: '#f9fafb' }}
-                    className="border-b border-gray-100 hover:bg-light transition-colors"
+                    onClick={() => setSelectedLead(lead)}
+                    className="border-b border-gray-100 hover:bg-light transition-colors cursor-pointer"
                   >
-                    <td className="px-6 py-4">
+                    <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
                       <input
                         type="checkbox"
                         checked={selectedLeads.includes(lead.id)}
@@ -266,7 +267,10 @@ export default function LeadsPage() {
                     <td className="px-6 py-4 text-right">
                       <motion.button
                         whileHover={{ scale: 1.1 }}
-                        onClick={() => setSelectedLead(lead)}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setSelectedLead(lead)
+                        }}
                         className="text-primary-500 hover:text-primary-700 font-semibold"
                       >
                         Reply
@@ -316,6 +320,13 @@ export default function LeadsPage() {
                 ✕
               </motion.button>
             </div>
+
+            {selectedLead.notes && (
+              <div className="mb-4 p-4 bg-white rounded-lg border border-gray-200">
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Original Message</label>
+                <p className="text-gray-700 whitespace-pre-wrap">{selectedLead.notes}</p>
+              </div>
+            )}
 
             <div className="space-y-4">
               <div>

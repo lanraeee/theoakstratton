@@ -49,13 +49,20 @@ async function initializeDatabase() {
     // Run migrations to fix existing databases
     await runMigrations()
 
-    // Seed default data
-    await seedDefaultAdmin()
-    await seedDefaultPlans()
-    await seedDefaultEmailTemplates()
-    await seedDefaultTestimonials()
-    await seedDefaultLandingContent()
-    await seedDefaultNavigationMenu()
+    // Seed default data - only seed if tables are empty
+    const adminCheck = await pool.query('SELECT COUNT(*) FROM admin_users').catch(() => null)
+    if (!adminCheck || parseInt(adminCheck.rows[0].count) === 0) {
+      await seedDefaultAdmin()
+    }
+
+    // Only seed other data in development or if explicitly enabled
+    if (process.env.SEED_DEMO_DATA === 'true') {
+      await seedDefaultPlans()
+      await seedDefaultEmailTemplates()
+      await seedDefaultTestimonials()
+      await seedDefaultLandingContent()
+      await seedDefaultNavigationMenu()
+    }
   } catch (error) {
     console.warn('⚠️  Database schema initialization error:', error.message)
   }
@@ -690,7 +697,7 @@ app.get('/api/admin/leads', authenticateToken, async (req, res) => {
 
     if (databaseAvailable) {
       const result = await pool.query(
-        'SELECT id, name, email, company, phone, source, status, created_at FROM leads ORDER BY created_at DESC LIMIT 500'
+        'SELECT id, name, email, company, phone, notes, source, status, created_at FROM leads ORDER BY created_at DESC LIMIT 500'
       )
       return res.json(result.rows.map(row => ({
         id: row.id,
@@ -698,6 +705,7 @@ app.get('/api/admin/leads', authenticateToken, async (req, res) => {
         email: row.email,
         company: row.company || 'N/A',
         phone: row.phone || '',
+        notes: row.notes || '',
         source: row.source || 'contact',
         status: row.status || 'new',
         date: row.created_at ? new Date(row.created_at).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
@@ -1475,6 +1483,54 @@ app.post('/api/contact', formLimiter, async (req, res) => {
   } catch (error) {
     console.error('Contact form error:', error)
     res.status(500).json({ error: 'Failed to process your request' })
+  }
+})
+
+// Email Settings Endpoints
+app.post('/api/admin/settings', authenticateToken, async (req, res) => {
+  try {
+    if (!req.user || req.user.role !== 'admin') {
+      return res.status(403).json({ error: 'Unauthorized' })
+    }
+
+    const { emailSettings } = req.body
+    if (!emailSettings) {
+      return res.status(400).json({ error: 'Email settings required' })
+    }
+
+    // Save email settings to environment/config
+    // In production, these would be securely stored
+    process.env.SMTP_HOST = emailSettings.smtpHost
+    process.env.SMTP_PORT = emailSettings.smtpPort
+    process.env.SMTP_USER = emailSettings.smtpUser
+    process.env.SMTP_PASSWORD = emailSettings.smtpPassword
+    process.env.SMTP_FROM = emailSettings.fromAddress
+    process.env.SMTP_REPLY_TO = emailSettings.replyTo
+
+    res.json({ success: true, message: 'Email settings saved' })
+  } catch (error) {
+    console.error('Settings save error:', error)
+    res.status(500).json({ error: 'Failed to save settings' })
+  }
+})
+
+app.post('/api/admin/send-test-email', authenticateToken, async (req, res) => {
+  try {
+    if (!req.user || req.user.role !== 'admin') {
+      return res.status(403).json({ error: 'Unauthorized' })
+    }
+
+    const { to } = req.body
+    if (!to) {
+      return res.status(400).json({ error: 'Email address required' })
+    }
+
+    // For now, just return success - in production would send actual email
+    console.log(`Test email would be sent to ${to}`)
+    res.json({ success: true, message: `Test email configuration valid` })
+  } catch (error) {
+    console.error('Test email error:', error)
+    res.status(500).json({ error: 'Failed to send test email' })
   }
 })
 

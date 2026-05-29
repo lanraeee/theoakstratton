@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
 import AdminLayout from '@/components/admin/AdminLayout'
 import { useAlert } from '@/contexts/AlertContext'
+import api from '@/services/api'
 
 interface ReportData {
   metric: string
@@ -11,28 +12,12 @@ interface ReportData {
   trend: 'up' | 'down' | 'stable'
 }
 
-const MONTHLY_DATA = [
-  { month: 'Jan', leads: 1240, conversions: 298, revenue: 12690, cac: 42.5 },
-  { month: 'Feb', leads: 1380, conversions: 345, revenue: 14662, cac: 40.0 },
-  { month: 'Mar', leads: 1520, conversions: 410, revenue: 17425, cac: 37.1 },
-  { month: 'Apr', leads: 1890, conversions: 512, revenue: 21760, cac: 36.8 },
-  { month: 'May', leads: 2240, conversions: 634, revenue: 26945, cac: 35.3 },
-  { month: 'Jun', leads: 2650, conversions: 743, revenue: 31603, cac: 35.7 },
-]
-
 const COHORT_DATA = [
   { weekCohort: 'Week 1', day0: 100, day7: 85, day14: 72, day21: 65, day28: 58, day35: 52 },
   { weekCohort: 'Week 2', day0: 120, day7: 98, day14: 82, day21: 74, day28: 68, day35: 62 },
   { weekCohort: 'Week 3', day0: 145, day7: 125, day14: 108, day21: 97, day28: 88 },
   { weekCohort: 'Week 4', day0: 160, day7: 142, day14: 124, day21: 113 },
   { weekCohort: 'Week 5', day0: 188, day7: 168, day14: 151 },
-]
-
-const CONVERSION_FUNNEL = [
-  { stage: 'Leads', count: 2650, percentage: 100 },
-  { stage: 'Contacted', count: 1890, percentage: 71.3 },
-  { stage: 'Qualified', count: 1245, percentage: 46.9 },
-  { stage: 'Customers', count: 743, percentage: 28.0 },
 ]
 
 const CHANNEL_DATA = [
@@ -43,16 +28,44 @@ const CHANNEL_DATA = [
 ]
 
 export default function ReportingPage() {
-  const { success } = useAlert()
+  const { success, error } = useAlert()
+  const [loading, setLoading] = useState(true)
   const [reportType, setReportType] = useState<'summary' | 'cohort' | 'channel' | 'custom'>('summary')
   const [dateRange, setDateRange] = useState<'7d' | '30d' | '90d' | 'custom'>('30d')
+  const [reportData, setReportData] = useState({
+    metrics: {
+      totalRevenue: 0,
+      conversionRate: 0,
+      avgLeadValue: 0,
+      customerLTV: 0,
+    },
+    monthlyData: [],
+    funnelData: [],
+  })
+
+  useEffect(() => {
+    fetchReportingData()
+  }, [])
+
+  const fetchReportingData = async () => {
+    try {
+      setLoading(true)
+      const response = await api.get('/api/admin/reporting')
+      setReportData(response.data)
+    } catch (err) {
+      console.error('Failed to fetch reporting data:', err)
+      error('Failed to fetch reporting data')
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const handleExportReport = () => {
     const report = {
       type: reportType,
       dateRange,
       generatedAt: new Date().toISOString(),
-      data: MONTHLY_DATA,
+      data: reportData,
     }
     const element = document.createElement('a')
     element.setAttribute('href', `data:text/json;charset=utf-8,${encodeURIComponent(JSON.stringify(report, null, 2))}`)
@@ -65,11 +78,25 @@ export default function ReportingPage() {
   }
 
   const summaryMetrics: ReportData[] = [
-    { metric: 'Total Revenue', value: 124085, change: 18.5, trend: 'up' },
-    { metric: 'Conversion Rate', value: 28, change: 4.2, trend: 'up' },
-    { metric: 'Avg Lead Value', value: 46.8, change: -2.1, trend: 'down' },
-    { metric: 'Customer LTV', value: 1240, change: 12.3, trend: 'up' },
+    { metric: 'Total Revenue', value: reportData.metrics.totalRevenue, change: 18.5, trend: 'up' },
+    { metric: 'Conversion Rate', value: reportData.metrics.conversionRate, change: 4.2, trend: 'up' },
+    { metric: 'Avg Lead Value', value: reportData.metrics.avgLeadValue, change: -2.1, trend: 'down' },
+    { metric: 'Customer LTV', value: reportData.metrics.customerLTV, change: 12.3, trend: 'up' },
   ]
+
+  if (loading) {
+    return (
+      <AdminLayout>
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-8">
+          <div className="animate-pulse space-y-4">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <div key={i} className="h-20 bg-gray-200 rounded"></div>
+            ))}
+          </div>
+        </motion.div>
+      </AdminLayout>
+    )
+  }
 
   return (
     <AdminLayout>
@@ -166,7 +193,7 @@ export default function ReportingPage() {
               <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="card p-6">
                 <h3 className="text-xl font-bold text-dark mb-4">Revenue Trend</h3>
                 <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={MONTHLY_DATA}>
+                  <BarChart data={reportData.monthlyData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                     <XAxis dataKey="month" stroke="#9ca3af" />
                     <YAxis stroke="#9ca3af" />
@@ -187,7 +214,7 @@ export default function ReportingPage() {
               <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="card p-6">
                 <h3 className="text-xl font-bold text-dark mb-4">Conversions & CAC</h3>
                 <ResponsiveContainer width="100%" height={300}>
-                  <LineChart data={MONTHLY_DATA}>
+                  <LineChart data={reportData.monthlyData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                     <XAxis dataKey="month" stroke="#9ca3af" />
                     <YAxis yAxisId="left" stroke="#9ca3af" />
@@ -226,7 +253,7 @@ export default function ReportingPage() {
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="card p-6">
               <h3 className="text-xl font-bold text-dark mb-6">Conversion Funnel</h3>
               <div className="space-y-4">
-                {CONVERSION_FUNNEL.map((stage, idx) => (
+                {reportData.funnelData.map((stage, idx) => (
                   <div key={idx} className="flex items-center gap-4">
                     <div className="w-24 text-sm font-semibold text-dark">{stage.stage}</div>
                     <div className="flex-1 bg-gray-100 rounded-full overflow-hidden h-8">

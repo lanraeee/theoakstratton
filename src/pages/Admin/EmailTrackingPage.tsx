@@ -1,7 +1,9 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import AdminLayout from '@/components/admin/AdminLayout'
+import { useAlert } from '@/contexts/AlertContext'
+import api from '@/services/api'
 
 interface EmailMetrics {
   id: string
@@ -24,70 +26,42 @@ interface TrackingData {
   clicked: number
 }
 
-const MOCK_EMAIL_METRICS: EmailMetrics[] = [
-  {
-    id: '1',
-    templateName: 'Waitlist Welcome',
-    sentCount: 2450,
-    deliveredCount: 2410,
-    openedCount: 1347,
-    clickedCount: 234,
-    bouncedCount: 40,
-    unsubscribeCount: 12,
-    conversionCount: 47,
-    sentDate: '2024-05-20',
-  },
-  {
-    id: '2',
-    templateName: 'Contact Confirmation',
-    sentCount: 1890,
-    deliveredCount: 1865,
-    openedCount: 1210,
-    clickedCount: 189,
-    bouncedCount: 25,
-    unsubscribeCount: 8,
-    conversionCount: 38,
-    sentDate: '2024-05-18',
-  },
-  {
-    id: '3',
-    templateName: 'Weekly Newsletter',
-    sentCount: 5200,
-    deliveredCount: 5080,
-    openedCount: 2540,
-    clickedCount: 512,
-    bouncedCount: 120,
-    unsubscribeCount: 31,
-    conversionCount: 127,
-    sentDate: '2024-05-15',
-  },
-  {
-    id: '4',
-    templateName: 'Re-engagement Campaign',
-    sentCount: 3100,
-    deliveredCount: 2980,
-    openedCount: 1192,
-    clickedCount: 267,
-    bouncedCount: 120,
-    unsubscribeCount: 45,
-    conversionCount: 89,
-    sentDate: '2024-05-12',
-  },
-]
-
-const TRACKING_TIMELINE: TrackingData[] = [
-  { date: 'May 8', sent: 2100, delivered: 2050, opened: 1230, clicked: 180 },
-  { date: 'May 10', sent: 2300, delivered: 2250, opened: 1350, clicked: 210 },
-  { date: 'May 12', sent: 3100, delivered: 2980, opened: 1192, clicked: 267 },
-  { date: 'May 15', sent: 5200, delivered: 5080, opened: 2540, clicked: 512 },
-  { date: 'May 18', sent: 1890, delivered: 1865, opened: 1210, clicked: 189 },
-  { date: 'May 20', sent: 2450, delivered: 2410, opened: 1347, clicked: 234 },
-]
-
 export default function EmailTrackingPage() {
-  const [metrics] = useState<EmailMetrics[]>(MOCK_EMAIL_METRICS)
+  const [metrics, setMetrics] = useState<EmailMetrics[]>([])
+  const [loading, setLoading] = useState(true)
   const [selectedMetric, setSelectedMetric] = useState<EmailMetrics | null>(null)
   const [dateRange, setDateRange] = useState<'7d' | '30d' | '90d' | 'custom'>('30d')
+  const { error } = useAlert()
+
+  useEffect(() => {
+    fetchEmailMetrics()
+  }, [])
+
+  const fetchEmailMetrics = async () => {
+    try {
+      setLoading(true)
+      const response = await api.get('/api/admin/email-tracking')
+      setMetrics(response.data || [])
+    } catch (err) {
+      console.error('Failed to fetch email tracking:', err)
+      error('Failed to fetch email tracking data')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Generate timeline data from metrics
+  const TRACKING_TIMELINE: TrackingData[] = useMemo(() => {
+    if (metrics.length === 0) return []
+
+    return metrics.slice(0, 6).map((m) => ({
+      date: m.sentDate.slice(5),
+      sent: m.sentCount,
+      delivered: m.deliveredCount,
+      opened: m.openedCount,
+      clicked: m.clickedCount,
+    })).reverse()
+  }, [metrics])
 
   const aggregateMetrics = useMemo(() => {
     return {
@@ -155,6 +129,20 @@ export default function EmailTrackingPage() {
       color: 'bg-red-50 border-red-200',
     },
   ]
+
+  if (loading) {
+    return (
+      <AdminLayout>
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-8">
+          <div className="animate-pulse space-y-4">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <div key={i} className="h-20 bg-gray-200 rounded"></div>
+            ))}
+          </div>
+        </motion.div>
+      </AdminLayout>
+    )
+  }
 
   return (
     <AdminLayout>

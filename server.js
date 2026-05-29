@@ -760,6 +760,303 @@ app.post('/api/admin/send-response/:leadId', authenticateToken, async (req, res)
   }
 })
 
+// Create a new lead (manual entry by admin)
+app.post('/api/admin/leads', authenticateToken, async (req, res) => {
+  try {
+    if (!req.user || (req.user.role !== 'admin' && req.user.role !== 'manager')) {
+      return res.status(403).json({ error: 'Unauthorized' })
+    }
+
+    const { name, email, company, phone, notes, source, status } = req.body
+
+    if (!email || !name) {
+      return res.status(400).json({ error: 'Name and email are required' })
+    }
+
+    if (databaseAvailable) {
+      const result = await pool.query(
+        'INSERT INTO leads (name, email, company, phone, notes, source, status) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id, name, email, company, phone, notes, source, status, created_at',
+        [name, email, company || '', phone || '', notes || '', source || 'contact', status || 'new']
+      )
+      const lead = result.rows[0]
+      res.json({
+        id: lead.id,
+        name: lead.name,
+        email: lead.email,
+        company: lead.company,
+        phone: lead.phone,
+        notes: lead.notes,
+        source: lead.source,
+        status: lead.status,
+        date: new Date(lead.created_at).toISOString().split('T')[0],
+      })
+    } else {
+      res.status(503).json({ error: 'Database not available' })
+    }
+  } catch (error) {
+    console.error('Create lead error:', error)
+    res.status(500).json({ error: 'Failed to create lead' })
+  }
+})
+
+// Update a lead
+app.put('/api/admin/leads/:id', authenticateToken, async (req, res) => {
+  try {
+    if (!req.user || (req.user.role !== 'admin' && req.user.role !== 'manager')) {
+      return res.status(403).json({ error: 'Unauthorized' })
+    }
+
+    const { id } = req.params
+    const { name, email, company, phone, notes, source, status } = req.body
+
+    if (databaseAvailable) {
+      await pool.query(
+        'UPDATE leads SET name = $1, email = $2, company = $3, phone = $4, notes = $5, source = $6, status = $7, updated_at = CURRENT_TIMESTAMP WHERE id = $8',
+        [name, email, company, phone, notes, source, status, id]
+      )
+      res.json({ success: true })
+    } else {
+      res.status(503).json({ error: 'Database not available' })
+    }
+  } catch (error) {
+    console.error('Update lead error:', error)
+    res.status(500).json({ error: 'Failed to update lead' })
+  }
+})
+
+// Delete a lead
+app.delete('/api/admin/leads/:id', authenticateToken, async (req, res) => {
+  try {
+    if (!req.user || (req.user.role !== 'admin' && req.user.role !== 'manager')) {
+      return res.status(403).json({ error: 'Unauthorized' })
+    }
+
+    const { id } = req.params
+
+    if (databaseAvailable) {
+      await pool.query('DELETE FROM leads WHERE id = $1', [id])
+      res.json({ success: true })
+    } else {
+      res.status(503).json({ error: 'Database not available' })
+    }
+  } catch (error) {
+    console.error('Delete lead error:', error)
+    res.status(500).json({ error: 'Failed to delete lead' })
+  }
+})
+
+// Get waitlist (leads with source = 'waitlist')
+app.get('/api/admin/waitlist', authenticateToken, async (req, res) => {
+  try {
+    if (!req.user || (req.user.role !== 'admin' && req.user.role !== 'manager')) {
+      return res.status(403).json({ error: 'Unauthorized' })
+    }
+
+    if (databaseAvailable) {
+      const result = await pool.query(
+        `SELECT
+          id, name, email, company,
+          COALESCE(status, 'active') as status,
+          created_at as joined_date,
+          COALESCE(EXTRACT(DAY FROM CURRENT_TIMESTAMP - updated_at), 0)::int as days_since_update
+        FROM leads
+        WHERE source = 'waitlist'
+        ORDER BY created_at DESC`
+      )
+
+      return res.json(result.rows.map(row => ({
+        id: row.id,
+        name: row.name || 'Unknown',
+        email: row.email,
+        company: row.company || '',
+        joinedDate: new Date(row.joined_date).toISOString().split('T')[0],
+        lastSeen: new Date(row.joined_date).toISOString().split('T')[0],
+        status: row.status === 'customer' ? 'converted' : row.days_since_update > 30 ? 'dormant' : 'active',
+        engagementScore: Math.max(0, 100 - (row.days_since_update * 2)),
+      })))
+    } else {
+      return res.json([])
+    }
+  } catch (error) {
+    console.error('Get waitlist error:', error)
+    res.status(500).json({ error: 'Failed to fetch waitlist' })
+  }
+})
+
+// Get email tracking metrics
+app.get('/api/admin/email-tracking', authenticateToken, async (req, res) => {
+  try {
+    if (!req.user || (req.user.role !== 'admin' && req.user.role !== 'manager')) {
+      return res.status(403).json({ error: 'Unauthorized' })
+    }
+
+    if (databaseAvailable) {
+      // Get email event summaries grouped by template
+      const result = await pool.query(
+        `SELECT
+          COALESCE(et.name, 'Unknown') as template_name,
+          COUNT(CASE WHEN eve.event_type = 'sent' THEN 1 END) as sent_count,
+          COUNT(CASE WHEN eve.event_type = 'delivered' THEN 1 END) as delivered_count,
+          COUNT(CASE WHEN eve.event_type = 'opened' THEN 1 END) as opened_count,
+          COUNT(CASE WHEN eve.event_type = 'clicked' THEN 1 END) as clicked_count,
+          COUNT(CASE WHEN eve.event_type = 'bounced' THEN 1 END) as bounced_count,
+          COUNT(CASE WHEN eve.event_type = 'failed' THEN 1 END) as failed_count,
+          MAX(eve.created_at) as last_sent
+        FROM email_events eve
+        LEFT JOIN email_templates et ON eve.template_id = et.id
+        WHERE eve.created_at > CURRENT_TIMESTAMP - INTERVAL '90 days'
+        GROUP BY et.id, et.name
+        ORDER BY MAX(eve.created_at) DESC
+        LIMIT 50`
+      )
+
+      const metrics = result.rows.map((row, idx) => ({
+        id: idx.toString(),
+        templateName: row.template_name,
+        sentCount: parseInt(row.sent_count) || 0,
+        deliveredCount: parseInt(row.delivered_count) || 0,
+        openedCount: parseInt(row.opened_count) || 0,
+        clickedCount: parseInt(row.clicked_count) || 0,
+        bouncedCount: parseInt(row.bounced_count) || 0,
+        unsubscribeCount: 0,
+        conversionCount: parseInt(row.clicked_count) || 0,
+        sentDate: row.last_sent ? new Date(row.last_sent).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+      }))
+
+      // If no data from events, return empty array with default structure
+      if (metrics.length === 0) {
+        return res.json([])
+      }
+
+      return res.json(metrics)
+    } else {
+      return res.json([])
+    }
+  } catch (error) {
+    console.error('Get email tracking error:', error)
+    res.status(500).json({ error: 'Failed to fetch email tracking' })
+  }
+})
+
+// Get reporting analytics data
+app.get('/api/admin/reporting', authenticateToken, async (req, res) => {
+  try {
+    if (!req.user || (req.user.role !== 'admin' && req.user.role !== 'manager')) {
+      return res.status(403).json({ error: 'Unauthorized' })
+    }
+
+    if (databaseAvailable) {
+      // Get total leads, conversions, and revenue
+      const statsResult = await pool.query(`
+        SELECT
+          COUNT(DISTINCT l.id) as total_leads,
+          COUNT(DISTINCT CASE WHEN l.status = 'customer' THEN l.id END) as total_customers,
+          COALESCE(SUM(o.amount_gbp), 0) as total_revenue
+        FROM leads l
+        LEFT JOIN orders o ON l.email = o.customer_email AND o.status = 'completed'
+      `)
+
+      const stats = statsResult.rows[0]
+      const totalLeads = parseInt(stats.total_leads) || 0
+      const totalCustomers = parseInt(stats.total_customers) || 0
+      const totalRevenue = parseInt(stats.total_revenue) || 0
+
+      // Calculate metrics
+      const conversionRate = totalLeads > 0 ? ((totalCustomers / totalLeads) * 100).toFixed(1) : 0
+      const avgLeadValue = totalLeads > 0 ? (totalRevenue / totalLeads).toFixed(2) : 0
+      const customerLTV = totalCustomers > 0 ? Math.round(totalRevenue / totalCustomers) : 0
+
+      // Get monthly data for charts
+      const monthlyResult = await pool.query(`
+        SELECT
+          DATE_TRUNC('month', l.created_at) as month,
+          COUNT(DISTINCT l.id) as leads,
+          COUNT(DISTINCT CASE WHEN l.status = 'customer' THEN l.id END) as conversions,
+          COALESCE(SUM(o.amount_gbp), 0) as revenue
+        FROM leads l
+        LEFT JOIN orders o ON l.email = o.customer_email AND o.status = 'completed'
+        WHERE l.created_at > CURRENT_TIMESTAMP - INTERVAL '6 months'
+        GROUP BY DATE_TRUNC('month', l.created_at)
+        ORDER BY month ASC
+      `)
+
+      const monthlyData = monthlyResult.rows.map(row => ({
+        month: new Date(row.month).toLocaleString('default', { month: 'short' }),
+        leads: parseInt(row.leads) || 0,
+        conversions: parseInt(row.conversions) || 0,
+        revenue: parseInt(row.revenue) || 0,
+        cac: parseInt(row.leads) > 0 ? Math.round(0 / parseInt(row.leads)) : 0,
+      }))
+
+      // Get conversion funnel
+      const funnelResult = await pool.query(`
+        SELECT
+          CASE WHEN status = 'new' THEN 'Leads'
+               WHEN status = 'contacted' THEN 'Contacted'
+               WHEN status = 'qualified' THEN 'Qualified'
+               WHEN status = 'customer' THEN 'Customers'
+               ELSE 'Other' END as stage,
+          COUNT(*) as count
+        FROM leads
+        WHERE status IN ('new', 'contacted', 'qualified', 'customer')
+        GROUP BY status
+        ORDER BY CASE WHEN status = 'new' THEN 1
+                      WHEN status = 'contacted' THEN 2
+                      WHEN status = 'qualified' THEN 3
+                      WHEN status = 'customer' THEN 4
+                      ELSE 5 END
+      `)
+
+      const funnelStages = ['Leads', 'Contacted', 'Qualified', 'Customers']
+      let totalCount = 0
+      const funnelData = funnelResult.rows.map(row => ({
+        stage: row.stage,
+        count: parseInt(row.count),
+        percentage: 0,
+      }))
+
+      if (funnelData.length > 0) {
+        totalCount = funnelData[0].count
+        funnelData.forEach(stage => {
+          stage.percentage = totalCount > 0 ? ((stage.count / totalCount) * 100) : 0
+        })
+      }
+
+      return res.json({
+        metrics: {
+          totalRevenue,
+          conversionRate: parseFloat(conversionRate as string),
+          avgLeadValue: parseFloat(avgLeadValue as string),
+          customerLTV,
+        },
+        monthlyData: monthlyData.length > 0 ? monthlyData : [
+          { month: 'Jan', leads: 0, conversions: 0, revenue: 0, cac: 0 },
+        ],
+        funnelData: funnelData.length > 0 ? funnelData : [
+          { stage: 'Leads', count: 0, percentage: 100 },
+          { stage: 'Contacted', count: 0, percentage: 0 },
+          { stage: 'Qualified', count: 0, percentage: 0 },
+          { stage: 'Customers', count: 0, percentage: 0 },
+        ],
+      })
+    } else {
+      return res.json({
+        metrics: {
+          totalRevenue: 0,
+          conversionRate: 0,
+          avgLeadValue: 0,
+          customerLTV: 0,
+        },
+        monthlyData: [],
+        funnelData: [],
+      })
+    }
+  } catch (error) {
+    console.error('Get reporting error:', error)
+    res.status(500).json({ error: 'Failed to fetch reporting data' })
+  }
+})
+
 // ============================================================================
 // USER MANAGEMENT ENDPOINTS (Admin Only)
 // ============================================================================

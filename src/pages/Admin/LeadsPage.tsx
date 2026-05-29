@@ -18,20 +18,19 @@ interface Lead {
   date?: string
 }
 
-const MOCK_LEADS: Lead[] = [
-  { id: '1', name: 'John Smith', email: 'john@example.com', company: 'Acme Corp', phone: '0123456789', source: 'waitlist', status: 'new', date: '2024-05-22' },
-  { id: '2', name: 'Sarah Johnson', email: 'sarah@test.com', company: 'Tech Inc', phone: '0987654321', source: 'contact', status: 'contacted', date: '2024-05-21' },
-  { id: '3', name: 'Mike Chen', email: 'mike@business.com', company: 'Design Co', phone: '0112233445', source: 'payment', status: 'qualified', date: '2024-05-20' },
-  { id: '4', name: 'Emma Davis', email: 'emma@startup.io', company: 'Startup LLC', phone: '0556677889', source: 'waitlist', status: 'customer', date: '2024-05-19' },
-  { id: '5', name: 'Alex Brown', email: 'alex@company.com', company: 'Corp Solutions', phone: '0998877665', source: 'contact', status: 'new', date: '2024-05-18' },
-  { id: '6', name: 'Lisa Wang', email: 'lisa@innovation.com', company: 'Innovation Lab', phone: '0334455667', source: 'contact', status: 'qualified', date: '2024-05-17' },
-  { id: '7', name: 'Tom Harris', email: 'tom@retail.com', company: 'Retail Plus', phone: '0778899001', source: 'payment', status: 'customer', date: '2024-05-16' },
-  { id: '8', name: 'Jessica Lee', email: 'jess@fashion.com', company: 'Fashion Boutique', phone: '0223344556', source: 'waitlist', status: 'contacted', date: '2024-05-15' },
-]
-
 export default function LeadsPage() {
-  const [leads, setLeads] = useState<Lead[]>(MOCK_LEADS)
-  const [loading, setLoading] = useState(false)
+  const [leads, setLeads] = useState<Lead[]>([])
+  const [loading, setLoading] = useState(true)
+  const [showAddForm, setShowAddForm] = useState(false)
+  const [addFormData, setAddFormData] = useState({
+    name: '',
+    email: '',
+    company: '',
+    phone: '',
+    notes: '',
+    source: 'contact' as const,
+    status: 'new' as const,
+  })
   const [searchTerm, setSearchTerm] = useState('')
   const [sourceFilter, setSourceFilter] = useState<'all' | Lead['source']>('all')
   const [statusFilter, setStatusFilter] = useState<'all' | Lead['status']>('all')
@@ -55,6 +54,43 @@ export default function LeadsPage() {
       // Keep using mock data on error
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleAddLead = async () => {
+    if (!addFormData.name || !addFormData.email) {
+      error('Name and email are required')
+      return
+    }
+
+    try {
+      const response = await api.post('/api/admin/leads', addFormData)
+      success('Lead added successfully')
+      setLeads([response.data, ...leads])
+      setShowAddForm(false)
+      setAddFormData({
+        name: '',
+        email: '',
+        company: '',
+        phone: '',
+        notes: '',
+        source: 'contact',
+        status: 'new',
+      })
+    } catch (err: any) {
+      error(err.response?.data?.error || 'Failed to add lead')
+    }
+  }
+
+  const handleDeleteLead = async (id: string) => {
+    if (!window.confirm('Are you sure you want to delete this lead?')) return
+
+    try {
+      await api.delete(`/api/admin/leads/${id}`)
+      success('Lead deleted successfully')
+      setLeads(leads.filter(l => l.id !== id))
+    } catch (err: any) {
+      error(err.response?.data?.error || 'Failed to delete lead')
     }
   }
 
@@ -132,9 +168,128 @@ export default function LeadsPage() {
     return colors[status]
   }
 
+  if (loading) {
+    return (
+      <AdminLayout>
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
+          <div className="animate-pulse space-y-4">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <div key={i} className="h-12 bg-gray-200 rounded"></div>
+            ))}
+          </div>
+        </motion.div>
+      </AdminLayout>
+    )
+  }
+
   return (
     <AdminLayout>
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
+        {/* Add Lead Button */}
+        {!showAddForm && (
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            onClick={() => setShowAddForm(true)}
+            className="btn btn-primary"
+          >
+            ➕ Add Lead
+          </motion.button>
+        )}
+
+        {/* Add Form */}
+        {showAddForm && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="card p-6 bg-blue-50 border border-blue-200"
+          >
+            <h3 className="text-lg font-bold text-dark mb-4">Add New Lead</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              <input
+                type="text"
+                placeholder="Name *"
+                value={addFormData.name}
+                onChange={(e) => setAddFormData({ ...addFormData, name: e.target.value })}
+                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+              />
+              <input
+                type="email"
+                placeholder="Email *"
+                value={addFormData.email}
+                onChange={(e) => setAddFormData({ ...addFormData, email: e.target.value })}
+                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+              />
+              <input
+                type="text"
+                placeholder="Company"
+                value={addFormData.company}
+                onChange={(e) => setAddFormData({ ...addFormData, company: e.target.value })}
+                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+              />
+              <input
+                type="tel"
+                placeholder="Phone"
+                value={addFormData.phone}
+                onChange={(e) => setAddFormData({ ...addFormData, phone: e.target.value })}
+                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+              />
+              <select
+                value={addFormData.source}
+                onChange={(e) => setAddFormData({ ...addFormData, source: e.target.value as any })}
+                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+              >
+                <option value="contact">Source: Contact</option>
+                <option value="waitlist">Source: Waitlist</option>
+                <option value="payment">Source: Payment</option>
+              </select>
+              <select
+                value={addFormData.status}
+                onChange={(e) => setAddFormData({ ...addFormData, status: e.target.value as any })}
+                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+              >
+                <option value="new">Status: New</option>
+                <option value="contacted">Status: Contacted</option>
+                <option value="qualified">Status: Qualified</option>
+                <option value="customer">Status: Customer</option>
+              </select>
+            </div>
+            <textarea
+              placeholder="Notes"
+              value={addFormData.notes}
+              onChange={(e) => setAddFormData({ ...addFormData, notes: e.target.value })}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 mb-4"
+              rows={3}
+            />
+            <div className="flex gap-2">
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                onClick={handleAddLead}
+                className="btn btn-primary"
+              >
+                Save Lead
+              </motion.button>
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                onClick={() => {
+                  setShowAddForm(false)
+                  setAddFormData({
+                    name: '',
+                    email: '',
+                    company: '',
+                    phone: '',
+                    notes: '',
+                    source: 'contact',
+                    status: 'new',
+                  })
+                }}
+                className="btn btn-outline"
+              >
+                Cancel
+              </motion.button>
+            </div>
+          </motion.div>
+        )}
+
         {/* Header with Filters */}
         <div className="card p-6">
           <div className="flex flex-col md:flex-row gap-4 mb-6">
@@ -264,7 +419,7 @@ export default function LeadsPage() {
                       </span>
                     </td>
                     <td className="px-6 py-4 text-gray-600 text-sm">{lead.date || lead.created_at?.split('T')[0] || '-'}</td>
-                    <td className="px-6 py-4 text-right">
+                    <td className="px-6 py-4 text-right space-x-2">
                       <motion.button
                         whileHover={{ scale: 1.1 }}
                         onClick={(e) => {
@@ -274,6 +429,16 @@ export default function LeadsPage() {
                         className="text-primary-500 hover:text-primary-700 font-semibold"
                       >
                         Reply
+                      </motion.button>
+                      <motion.button
+                        whileHover={{ scale: 1.1 }}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleDeleteLead(lead.id)
+                        }}
+                        className="text-red-500 hover:text-red-700 font-semibold"
+                      >
+                        Delete
                       </motion.button>
                     </td>
                   </motion.tr>

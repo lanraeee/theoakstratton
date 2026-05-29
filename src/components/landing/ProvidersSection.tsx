@@ -7,7 +7,7 @@ const providers = [
     terms: '3-4 monthly payments',
     users: '150M+',
     description: 'Best for fashion, lifestyle, and home goods',
-    color: 'from-pink-500 to-rose-500',
+    color: 'from-pink-600 to-rose-600',
   },
   {
     name: 'Clearpay',
@@ -15,7 +15,7 @@ const providers = [
     terms: '4 fortnightly payments',
     users: '20M+',
     description: 'Perfect for retail and beauty',
-    color: 'from-blue-500 to-cyan-500',
+    color: 'from-blue-600 to-cyan-600',
   },
   {
     name: 'PayPal Pay Later',
@@ -23,7 +23,7 @@ const providers = [
     terms: '4 installments',
     users: '100M+',
     description: 'For existing PayPal merchants',
-    color: 'from-yellow-500 to-orange-500',
+    color: 'from-amber-600 to-orange-600',
   },
   {
     name: 'Stripe Installments',
@@ -31,7 +31,7 @@ const providers = [
     terms: '3-24 months',
     users: '50M+',
     description: 'Flexible terms for any business',
-    color: 'from-purple-500 to-indigo-500',
+    color: 'from-purple-600 to-indigo-600',
   },
 ]
 
@@ -92,6 +92,16 @@ export default function ProvidersSection() {
               {/* Gradient background on hover */}
               <motion.div
                 className={`absolute inset-0 bg-gradient-to-br ${provider.color} -z-10`}
+                variants={{
+                  initial: { opacity: 0 },
+                  hover: { opacity: 1 },
+                }}
+                transition={{ duration: 0.4 }}
+              />
+
+              {/* Dark overlay for text contrast */}
+              <motion.div
+                className="absolute inset-0 bg-black/20 -z-10"
                 variants={{
                   initial: { opacity: 0 },
                   hover: { opacity: 1 },

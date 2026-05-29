@@ -938,6 +938,125 @@ app.get('/api/admin/email-tracking', authenticateToken, async (req, res) => {
   }
 })
 
+// Get reporting analytics data
+app.get('/api/admin/reporting', authenticateToken, async (req, res) => {
+  try {
+    if (!req.user || (req.user.role !== 'admin' && req.user.role !== 'manager')) {
+      return res.status(403).json({ error: 'Unauthorized' })
+    }
+
+    if (databaseAvailable) {
+      // Get total leads, conversions, and revenue
+      const statsResult = await pool.query(`
+        SELECT
+          COUNT(DISTINCT l.id) as total_leads,
+          COUNT(DISTINCT CASE WHEN l.status = 'customer' THEN l.id END) as total_customers,
+          COALESCE(SUM(o.amount_gbp), 0) as total_revenue
+        FROM leads l
+        LEFT JOIN orders o ON l.email = o.customer_email AND o.status = 'completed'
+      `)
+
+      const stats = statsResult.rows[0]
+      const totalLeads = parseInt(stats.total_leads) || 0
+      const totalCustomers = parseInt(stats.total_customers) || 0
+      const totalRevenue = parseInt(stats.total_revenue) || 0
+
+      // Calculate metrics
+      const conversionRate = totalLeads > 0 ? ((totalCustomers / totalLeads) * 100).toFixed(1) : 0
+      const avgLeadValue = totalLeads > 0 ? (totalRevenue / totalLeads).toFixed(2) : 0
+      const customerLTV = totalCustomers > 0 ? Math.round(totalRevenue / totalCustomers) : 0
+
+      // Get monthly data for charts
+      const monthlyResult = await pool.query(`
+        SELECT
+          DATE_TRUNC('month', l.created_at) as month,
+          COUNT(DISTINCT l.id) as leads,
+          COUNT(DISTINCT CASE WHEN l.status = 'customer' THEN l.id END) as conversions,
+          COALESCE(SUM(o.amount_gbp), 0) as revenue
+        FROM leads l
+        LEFT JOIN orders o ON l.email = o.customer_email AND o.status = 'completed'
+        WHERE l.created_at > CURRENT_TIMESTAMP - INTERVAL '6 months'
+        GROUP BY DATE_TRUNC('month', l.created_at)
+        ORDER BY month ASC
+      `)
+
+      const monthlyData = monthlyResult.rows.map(row => ({
+        month: new Date(row.month).toLocaleString('default', { month: 'short' }),
+        leads: parseInt(row.leads) || 0,
+        conversions: parseInt(row.conversions) || 0,
+        revenue: parseInt(row.revenue) || 0,
+        cac: parseInt(row.leads) > 0 ? Math.round(0 / parseInt(row.leads)) : 0,
+      }))
+
+      // Get conversion funnel
+      const funnelResult = await pool.query(`
+        SELECT
+          CASE WHEN status = 'new' THEN 'Leads'
+               WHEN status = 'contacted' THEN 'Contacted'
+               WHEN status = 'qualified' THEN 'Qualified'
+               WHEN status = 'customer' THEN 'Customers'
+               ELSE 'Other' END as stage,
+          COUNT(*) as count
+        FROM leads
+        WHERE status IN ('new', 'contacted', 'qualified', 'customer')
+        GROUP BY status
+        ORDER BY CASE WHEN status = 'new' THEN 1
+                      WHEN status = 'contacted' THEN 2
+                      WHEN status = 'qualified' THEN 3
+                      WHEN status = 'customer' THEN 4
+                      ELSE 5 END
+      `)
+
+      const funnelStages = ['Leads', 'Contacted', 'Qualified', 'Customers']
+      let totalCount = 0
+      const funnelData = funnelResult.rows.map(row => ({
+        stage: row.stage,
+        count: parseInt(row.count),
+        percentage: 0,
+      }))
+
+      if (funnelData.length > 0) {
+        totalCount = funnelData[0].count
+        funnelData.forEach(stage => {
+          stage.percentage = totalCount > 0 ? ((stage.count / totalCount) * 100) : 0
+        })
+      }
+
+      return res.json({
+        metrics: {
+          totalRevenue,
+          conversionRate: parseFloat(conversionRate as string),
+          avgLeadValue: parseFloat(avgLeadValue as string),
+          customerLTV,
+        },
+        monthlyData: monthlyData.length > 0 ? monthlyData : [
+          { month: 'Jan', leads: 0, conversions: 0, revenue: 0, cac: 0 },
+        ],
+        funnelData: funnelData.length > 0 ? funnelData : [
+          { stage: 'Leads', count: 0, percentage: 100 },
+          { stage: 'Contacted', count: 0, percentage: 0 },
+          { stage: 'Qualified', count: 0, percentage: 0 },
+          { stage: 'Customers', count: 0, percentage: 0 },
+        ],
+      })
+    } else {
+      return res.json({
+        metrics: {
+          totalRevenue: 0,
+          conversionRate: 0,
+          avgLeadValue: 0,
+          customerLTV: 0,
+        },
+        monthlyData: [],
+        funnelData: [],
+      })
+    }
+  } catch (error) {
+    console.error('Get reporting error:', error)
+    res.status(500).json({ error: 'Failed to fetch reporting data' })
+  }
+})
+
 // ============================================================================
 // USER MANAGEMENT ENDPOINTS (Admin Only)
 // ============================================================================

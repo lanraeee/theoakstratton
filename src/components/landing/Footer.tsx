@@ -20,7 +20,7 @@ const defaultLinks = {
 }
 
 const defaultContent: FooterContent = {
-  tagline: 'Oakstratton Solutions',
+  tagline: 'Oakstratton',
   companySummary: 'Providing bespoke BNPL payment integration tailored to optimize business operations for up north profitability.',
   madeWithText: 'Made with ❤️ by Belloite Holdings. Helping small businesses compete globally.',
 }

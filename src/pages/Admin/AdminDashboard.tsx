@@ -133,6 +133,7 @@ export default function AdminDashboard() {
             { id: 'waitlist', label: '📧 Waitlist' },
             { id: 'contact', label: '💬 Contact' },
             { id: 'footer', label: '🔗 Footer' },
+            { id: 'settings', label: '⚙️ Settings' },
           ].map((tab) => (
             <motion.button
               key={tab.id}
@@ -160,6 +161,7 @@ export default function AdminDashboard() {
           {activeTab === 'waitlist' && <WaitlistEditor content={content.waitlist} onSave={saveContent} />}
           {activeTab === 'contact' && <ContactEditor content={content.contact} onSave={saveContent} />}
           {activeTab === 'footer' && <FooterEditor content={content.footer} onSave={saveContent} />}
+          {activeTab === 'settings' && <SettingsEditor />}
         </div>
       </motion.div>
     </AdminLayout>
@@ -898,6 +900,160 @@ function FooterEditor({ content, onSave }: any) {
       >
         Save Footer
       </motion.button>
+    </motion.div>
+  )
+}
+
+// Settings Editor - Email Configuration
+function SettingsEditor() {
+  const [emailSettings, setEmailSettings] = useState({
+    smtpHost: 'smtp.gmail.com',
+    smtpPort: 587,
+    smtpUser: '',
+    smtpPassword: '',
+    fromAddress: 'noreply@oakstratton.com',
+    replyTo: 'support@oakstratton.com',
+  })
+  const [testEmail, setTestEmail] = useState('')
+  const [sending, setSending] = useState(false)
+  const { success, error } = useAlert()
+
+  const handleSaveSettings = async () => {
+    try {
+      await api.post('/api/admin/settings', { emailSettings })
+      success('Email settings saved successfully')
+    } catch (err: any) {
+      error(err.response?.data?.error || 'Failed to save settings')
+    }
+  }
+
+  const handleSendTest = async () => {
+    if (!testEmail) {
+      error('Please enter an email address')
+      return
+    }
+    try {
+      setSending(true)
+      await api.post('/api/admin/send-test-email', { to: testEmail })
+      success(`Test email sent to ${testEmail}`)
+      setTestEmail('')
+    } catch (err: any) {
+      error(err.response?.data?.error || 'Failed to send test email')
+    } finally {
+      setSending(false)
+    }
+  }
+
+  return (
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
+      {/* Email Configuration */}
+      <div className="card p-6 max-w-2xl">
+        <h2 className="text-2xl font-bold text-dark mb-6">📧 Email Configuration</h2>
+
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">SMTP Host</label>
+              <input
+                type="text"
+                value={emailSettings.smtpHost}
+                onChange={(e) => setEmailSettings({ ...emailSettings, smtpHost: e.target.value })}
+                placeholder="smtp.gmail.com"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">SMTP Port</label>
+              <input
+                type="number"
+                value={emailSettings.smtpPort}
+                onChange={(e) => setEmailSettings({ ...emailSettings, smtpPort: Number(e.target.value) })}
+                placeholder="587"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">SMTP Username</label>
+            <input
+              type="email"
+              value={emailSettings.smtpUser}
+              onChange={(e) => setEmailSettings({ ...emailSettings, smtpUser: e.target.value })}
+              placeholder="your-email@gmail.com"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">SMTP Password</label>
+            <input
+              type="password"
+              value={emailSettings.smtpPassword}
+              onChange={(e) => setEmailSettings({ ...emailSettings, smtpPassword: e.target.value })}
+              placeholder="••••••••"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">From Address</label>
+              <input
+                type="email"
+                value={emailSettings.fromAddress}
+                onChange={(e) => setEmailSettings({ ...emailSettings, fromAddress: e.target.value })}
+                placeholder="noreply@oakstratton.com"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Reply-To Address</label>
+              <input
+                type="email"
+                value={emailSettings.replyTo}
+                onChange={(e) => setEmailSettings({ ...emailSettings, replyTo: e.target.value })}
+                placeholder="support@oakstratton.com"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+              />
+            </div>
+          </div>
+        </div>
+
+        <motion.button
+          whileHover={{ scale: 1.05 }}
+          onClick={handleSaveSettings}
+          className="mt-6 btn btn-primary w-full"
+        >
+          Save Email Settings
+        </motion.button>
+      </div>
+
+      {/* Test Email */}
+      <div className="card p-6 max-w-2xl">
+        <h2 className="text-2xl font-bold text-dark mb-6">📬 Send Test Email</h2>
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">Test Email Address</label>
+            <input
+              type="email"
+              value={testEmail}
+              onChange={(e) => setTestEmail(e.target.value)}
+              placeholder="your-email@example.com"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+            />
+          </div>
+        </div>
+
+        <motion.button
+          whileHover={{ scale: 1.05 }}
+          onClick={handleSendTest}
+          disabled={sending}
+          className="mt-6 btn btn-primary w-full disabled:opacity-50"
+        >
+          {sending ? 'Sending...' : '📧 Send Test Email'}
+        </motion.button>
+      </div>
     </motion.div>
   )
 }

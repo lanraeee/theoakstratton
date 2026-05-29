@@ -1,42 +1,74 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { BarChart, Bar, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ComposedChart, Line } from 'recharts'
 import AdminLayout from '@/components/admin/AdminLayout'
-
-const leadsTrendData = [
-  { date: 'Mon', leads: 45, contacts: 32, waitlist: 13 },
-  { date: 'Tue', leads: 52, contacts: 38, waitlist: 14 },
-  { date: 'Wed', leads: 48, contacts: 35, waitlist: 13 },
-  { date: 'Thu', leads: 61, contacts: 44, waitlist: 17 },
-  { date: 'Fri', leads: 55, contacts: 40, waitlist: 15 },
-  { date: 'Sat', leads: 67, contacts: 48, waitlist: 19 },
-  { date: 'Sun', leads: 43, contacts: 31, waitlist: 12 },
-]
-
-const conversionFunnelData = [
-  { stage: 'Visitors', value: 1200 },
-  { stage: 'Leads', value: 847 },
-  { stage: 'Contacted', value: 512 },
-  { stage: 'Qualified', value: 289 },
-  { stage: 'Customers', value: 156 },
-]
-
-const paymentMethodsData = [
-  { name: 'Card', value: 456, percentage: 42 },
-  { name: 'Klarna', value: 312, percentage: 29 },
-  { name: 'Clearpay', value: 187, percentage: 17 },
-  { name: 'PayPal', value: 123, percentage: 12 },
-]
+import api from '@/services/api'
+import { useAlert } from '@/contexts/AlertContext'
 
 export default function AnalyticsPage() {
   const [dateRange, setDateRange] = useState('7d')
+  const [loading, setLoading] = useState(true)
+  const [metrics, setMetrics] = useState([
+    { label: 'Total Leads', value: '0', trend: '0%', color: 'from-primary-500 to-primary-600' },
+    { label: 'Conversion Rate', value: '0%', trend: '0%', color: 'from-secondary-500 to-secondary-600' },
+    { label: 'Avg. Lead Value', value: '£0', trend: '0%', color: 'from-accent-500 to-accent-600' },
+    { label: 'Revenue This Month', value: '£0', trend: '0%', color: 'from-green-500 to-green-600' },
+  ])
+  const [trendData, setTrendData] = useState<any[]>([])
+  const { error } = useAlert()
 
-  const metrics = [
-    { label: 'Total Leads', value: '1,234', trend: '+12%', color: 'from-primary-500 to-primary-600' },
-    { label: 'Conversion Rate', value: '18.5%', trend: '+2.3%', color: 'from-secondary-500 to-secondary-600' },
-    { label: 'Avg. Lead Value', value: '£245', trend: '+8%', color: 'from-accent-500 to-accent-600' },
-    { label: 'Revenue This Month', value: '£12,450', trend: '+18%', color: 'from-green-500 to-green-600' },
-  ]
+  useEffect(() => {
+    fetchAnalyticsData()
+  }, [dateRange])
+
+  const fetchAnalyticsData = async () => {
+    try {
+      setLoading(true)
+
+      // Fetch leads data
+      const leadsRes = await api.get('/api/admin/leads')
+      const leads = leadsRes.data || []
+
+      // Fetch orders data
+      const ordersRes = await api.get('/api/admin/orders')
+      const orders = ordersRes.data || []
+
+      const totalLeads = leads.length
+      const qualifiedLeads = leads.filter((l: any) => l.status === 'qualified' || l.status === 'customer').length
+      const customers = leads.filter((l: any) => l.status === 'customer').length
+
+      const totalRevenue = orders.reduce((sum: number, order: any) => sum + (order.amount_gbp || 0), 0)
+      const conversionRate = totalLeads > 0 ? ((customers / totalLeads) * 100).toFixed(1) : '0'
+      const avgLeadValue = orders.length > 0 ? (totalRevenue / orders.length).toFixed(0) : '0'
+
+      setMetrics([
+        { label: 'Total Leads', value: totalLeads.toString(), trend: '+0%', color: 'from-primary-500 to-primary-600' },
+        { label: 'Conversion Rate', value: `${conversionRate}%`, trend: '+0%', color: 'from-secondary-500 to-secondary-600' },
+        { label: 'Avg. Lead Value', value: `£${avgLeadValue}`, trend: '+0%', color: 'from-accent-500 to-accent-600' },
+        { label: 'Revenue This Month', value: `£${totalRevenue.toLocaleString()}`, trend: '+0%', color: 'from-green-500 to-green-600' },
+      ])
+
+      // Generate trend data from leads
+      const trendMap: { [key: string]: any } = {}
+      leads.forEach((lead: any) => {
+        const date = new Date(lead.created_at || lead.date)
+        const dateStr = date.toLocaleDateString('en-US', { weekday: 'short' })
+        if (!trendMap[dateStr]) {
+          trendMap[dateStr] = { date: dateStr, leads: 0, contacts: 0, waitlist: 0 }
+        }
+        if (lead.source === 'contact') trendMap[dateStr].contacts++
+        else if (lead.source === 'waitlist') trendMap[dateStr].waitlist++
+        trendMap[dateStr].leads++
+      })
+
+      setTrendData(Object.values(trendMap).slice(-7))
+    } catch (err) {
+      console.error('Failed to fetch analytics:', err)
+      error('Failed to load analytics data')
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const containerVariants = {
     hidden: { opacity: 0 },

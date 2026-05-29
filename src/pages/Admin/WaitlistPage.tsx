@@ -1,7 +1,8 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import AdminLayout from '@/components/admin/AdminLayout'
 import { useAlert } from '@/contexts/AlertContext'
+import api from '@/services/api'
 
 interface WaitlistLead {
   id: string
@@ -14,24 +15,65 @@ interface WaitlistLead {
   engagementScore: number
 }
 
-const WAITLIST_LEADS: WaitlistLead[] = [
-]
-
 export default function WaitlistPage() {
+  const [leads, setLeads] = useState<WaitlistLead[]>([])
+  const [loading, setLoading] = useState(true)
   const [segment, setSegment] = useState<'all' | 'active' | 'dormant' | 'converted'>('all')
   const [selectedLeads, setSelectedLeads] = useState<string[]>([])
-  const { success } = useAlert()
+  const [showAddForm, setShowAddForm] = useState(false)
+  const [formData, setFormData] = useState({ name: '', email: '', company: '' })
+  const { success, error } = useAlert()
+
+  useEffect(() => {
+    fetchWaitlist()
+  }, [])
+
+  const fetchWaitlist = async () => {
+    try {
+      setLoading(true)
+      const response = await api.get('/api/admin/waitlist')
+      setLeads(response.data)
+    } catch (err) {
+      console.error('Failed to fetch waitlist:', err)
+      error('Failed to fetch waitlist')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleAddWaitlistEntry = async () => {
+    if (!formData.email || !formData.name) {
+      error('Name and email are required')
+      return
+    }
+
+    try {
+      await api.post('/api/admin/leads', {
+        name: formData.name,
+        email: formData.email,
+        company: formData.company,
+        source: 'waitlist',
+        status: 'active',
+      })
+      success('Waitlist entry added successfully')
+      setFormData({ name: '', email: '', company: '' })
+      setShowAddForm(false)
+      fetchWaitlist()
+    } catch (err: any) {
+      error(err.response?.data?.error || 'Failed to add entry')
+    }
+  }
 
   const filteredLeads = useMemo(() => {
-    if (segment === 'all') return WAITLIST_LEADS
-    return WAITLIST_LEADS.filter((lead) => lead.status === segment)
-  }, [segment])
+    if (segment === 'all') return leads
+    return leads.filter((lead) => lead.status === segment)
+  }, [leads, segment])
 
   const stats = {
-    total: WAITLIST_LEADS.length,
-    active: WAITLIST_LEADS.filter((l) => l.status === 'active').length,
-    dormant: WAITLIST_LEADS.filter((l) => l.status === 'dormant').length,
-    converted: WAITLIST_LEADS.filter((l) => l.status === 'converted').length,
+    total: leads.length,
+    active: leads.filter((l) => l.status === 'active').length,
+    dormant: leads.filter((l) => l.status === 'dormant').length,
+    converted: leads.filter((l) => l.status === 'converted').length,
   }
 
   const sendEmailToSegment = () => {
@@ -48,9 +90,87 @@ export default function WaitlistPage() {
     }
   }
 
+  if (loading) {
+    return (
+      <AdminLayout>
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
+          <div className="animate-pulse space-y-4">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="h-16 bg-gray-200 rounded"></div>
+            ))}
+          </div>
+        </motion.div>
+      </AdminLayout>
+    )
+  }
+
   return (
     <AdminLayout>
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
+        {/* Add Waitlist Entry Button */}
+        {!showAddForm && (
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            onClick={() => setShowAddForm(true)}
+            className="btn btn-primary"
+          >
+            ➕ Add Waitlist Entry
+          </motion.button>
+        )}
+
+        {/* Add Form */}
+        {showAddForm && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="card p-6 bg-blue-50 border border-blue-200"
+          >
+            <h3 className="text-lg font-bold text-dark mb-4">Add New Waitlist Entry</h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+              <input
+                type="text"
+                placeholder="Name"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+              />
+              <input
+                type="email"
+                placeholder="Email"
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+              />
+              <input
+                type="text"
+                placeholder="Company"
+                value={formData.company}
+                onChange={(e) => setFormData({ ...formData, company: e.target.value })}
+                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+              />
+            </div>
+            <div className="flex gap-2">
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                onClick={handleAddWaitlistEntry}
+                className="btn btn-primary"
+              >
+                Save Entry
+              </motion.button>
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                onClick={() => {
+                  setShowAddForm(false)
+                  setFormData({ name: '', email: '', company: '' })
+                }}
+                className="btn btn-outline"
+              >
+                Cancel
+              </motion.button>
+            </div>
+          </motion.div>
+        )}
+
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           {[

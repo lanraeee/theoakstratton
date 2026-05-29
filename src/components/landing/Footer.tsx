@@ -18,7 +18,7 @@ const defaultLinks = {
 
 const defaultContent: FooterContent = {
   tagline: 'Oakstratton Solutions',
-  companySummary: 'Providing bespoke BNPL payment integration tailored to optimize business operations for up orth profitability.',
+  companySummary: 'Providing bespoke BNPL payment integration tailored to optimize business operations for up north profitability.',
   madeWithText: 'Made with ❤️ by Belloite Holdings. Helping small businesses compete globally.',
 }
 
@@ -113,7 +113,7 @@ export default function Footer() {
         {/* Divider */}
         <div className="border-t border-gray-800 pt-8">
           <p className="text-sm text-gray-400 text-center">
-            © {currentYear} Oakstratton Solutions (Belloite Ltd). All rights reserved.
+            © {currentYear} Oakstratton Solutions. All rights reserved.
           </p>
         </div>
 

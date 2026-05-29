@@ -71,6 +71,8 @@ export default function CheckoutPage() {
     try {
       const response = await api.post('/api/checkout/create-session', {
         planId: plan.id,
+        planName: plan.name,
+        price_gbp: plan.price_gbp,
         email: formData.email,
         name: formData.name,
       })

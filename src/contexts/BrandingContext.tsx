@@ -41,18 +41,23 @@ export function BrandingProvider({ children }: { children: ReactNode }) {
     try {
       setLoading(true)
       const response = await api.get('/api/landing-content')
-      if (response.data?.branding) {
+      const data = response.data
+
+      // API returns nested structure: { branding: { branding: "..." } }
+      const brandingData = data?.branding?.branding || data?.branding
+
+      if (brandingData) {
         try {
-          const parsed = JSON.parse(response.data.branding)
-          const brandingData: BrandingData = {
-            logoType: parsed.logoType || 'text',
-            logoText: parsed.logoText || 'Oakstratton',
-            logoUrl: parsed.logoUrl || '',
-            faviconUrl: parsed.faviconUrl || '',
+          const parsed = typeof brandingData === 'string' ? JSON.parse(brandingData) : brandingData
+          const brandingObj: BrandingData = {
+            logoType: parsed?.logoType || 'text',
+            logoText: parsed?.logoText || 'Oakstratton',
+            logoUrl: parsed?.logoUrl || '',
+            faviconUrl: parsed?.faviconUrl || '',
           }
-          setBranding(brandingData)
-          if (brandingData.faviconUrl) {
-            setFavicon(brandingData.faviconUrl)
+          setBranding(brandingObj)
+          if (brandingObj.faviconUrl) {
+            setFavicon(brandingObj.faviconUrl)
           }
         } catch (e) {
           console.error('Failed to parse branding:', e)

@@ -37,13 +37,15 @@ export default function AdminDashboard() {
 
       const parsed: DashboardContent = {}
 
-      // Parse all content sections with proper fallbacks
-      parsed.hero = data.hero_content ? tryParse(data.hero_content) : []
-      parsed.features = data.features_content ? tryParse(data.features_content) : []
-      parsed.providers = data.providers_content ? tryParse(data.providers_content) : []
-      parsed.testimonials = data.testimonials_content ? tryParse(data.testimonials_content) : []
-      parsed.footer = data.footer_content ? tryParse(data.footer_content) : {}
-      parsed.branding = data.branding ? tryParse(data.branding) : {
+      // API returns nested structure: { hero: { hero_content: "..." }, branding: { branding: "..." }, etc }
+      parsed.hero = data.hero?.hero_content ? tryParse(data.hero.hero_content) : []
+      parsed.features = data.features?.features_content ? tryParse(data.features.features_content) : []
+      parsed.providers = data.providers?.providers_content ? tryParse(data.providers.providers_content) : []
+      parsed.testimonials = data.testimonials?.testimonials_content ? tryParse(data.testimonials.testimonials_content) : []
+      parsed.footer = data.footer?.footer_content ? tryParse(data.footer.footer_content) : {}
+
+      const brandingData = data.branding?.branding || data.branding
+      parsed.branding = brandingData ? tryParse(brandingData) : {
         logoType: 'text',
         logoText: 'Oakstratton',
         logoUrl: '',
@@ -51,18 +53,18 @@ export default function AdminDashboard() {
       }
 
       parsed.pricing = {
-        title: data.pricing_title || '',
-        subtitle: data.pricing_subtitle || '',
+        title: data.pricing?.pricing_title || '',
+        subtitle: data.pricing?.pricing_subtitle || '',
       }
 
       parsed.waitlist = {
-        title: data.waitlist_title || '',
-        description: data.waitlist_description || '',
+        title: data.waitlist?.waitlist_title || '',
+        description: data.waitlist?.waitlist_description || '',
       }
 
       parsed.contact = {
-        title: data.contact_title || '',
-        description: data.contact_description || '',
+        title: data.contact?.contact_title || '',
+        description: data.contact?.contact_description || '',
       }
 
       setContent(parsed)

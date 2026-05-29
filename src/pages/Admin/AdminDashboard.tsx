@@ -23,6 +23,7 @@ export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('branding')
   const [saving, setSaving] = useState(false)
   const { success, error } = useAlert()
+  const { refetch: refetchBranding } = useBranding()
 
   useEffect(() => {
     fetchAllContent()
@@ -95,6 +96,10 @@ export default function AdminDashboard() {
       // Refresh content to ensure it's persisted correctly
       await new Promise(resolve => setTimeout(resolve, 500))
       await fetchAllContent()
+      // Refetch branding context if branding was saved
+      if (field === 'branding') {
+        await refetchBranding()
+      }
     } catch (err) {
       error('Failed to save content')
       console.error(err)

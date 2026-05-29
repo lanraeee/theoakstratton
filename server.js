@@ -1025,8 +1025,8 @@ app.get('/api/admin/reporting', authenticateToken, async (req, res) => {
       return res.json({
         metrics: {
           totalRevenue,
-          conversionRate: parseFloat(conversionRate as string),
-          avgLeadValue: parseFloat(avgLeadValue as string),
+          conversionRate: parseFloat(conversionRate),
+          avgLeadValue: parseFloat(avgLeadValue),
           customerLTV,
         },
         monthlyData: monthlyData.length > 0 ? monthlyData : [

@@ -105,16 +105,44 @@ export default function Footer() {
             className="flex flex-col items-start md:items-end justify-start"
           >
             <h4 className="font-semibold text-white mb-4">Connect</h4>
-            <div className="flex gap-3">
+            <div className="flex gap-6">
               {defaultLinks.Social.map((social, idx) => (
                 <motion.a
                   key={idx}
                   href={social.url}
-                  whileHover={{ scale: 1.2, rotate: 10 }}
-                  className="w-10 h-10 bg-white/10 hover:bg-primary-500 rounded-full flex items-center justify-center transition-colors text-sm font-bold"
+                  whileHover={{ scale: 1.15, rotateY: 20 }}
+                  className="w-12 h-12 group relative"
+                  style={{ perspective: '1000px' }}
                   title={social.name}
                 >
-                  {social.name[0]}
+                  <motion.div
+                    className="w-full h-full flex items-center justify-center relative"
+                    whileHover={{ y: -2 }}
+                    style={{
+                      background: 'linear-gradient(135deg, rgba(0,94,184,0.3) 0%, rgba(102,126,234,0.3) 100%)',
+                      border: '1px solid rgba(255,255,255,0.1)',
+                      borderRadius: '12px',
+                      boxShadow: '0 8px 16px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.1)',
+                    }}
+                  >
+                    {social.name === 'Twitter' && (
+                      <svg className="w-6 h-6 text-[#1DA1F2] group-hover:text-white transition-colors" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M23 3a10.9 10.9 0 01-3.14 1.53 4.48 4.48 0 00-7.86 3v1A10.66 10.66 0 013 4s-4 9 5 13a11.64 11.64 0 01-7 2s9 5 20 5a9.5 9.5 0 00-9-5.5c4.75 2.25 7-7 7-7a10.6 10.6 0 01-9.8 7C2 15.5-1 8 3 5c3.6 3.1 7 3 7 3a10.9 10.9 0 01-2-10z" />
+                      </svg>
+                    )}
+                    {social.name === 'Instagram' && (
+                      <svg className="w-6 h-6 text-transparent bg-gradient-to-r from-[#f09433] via-[#e6683c] to-[#dc2743] bg-clip-text fill-current group-hover:from-white group-hover:via-white group-hover:to-white transition-all" viewBox="0 0 24 24">
+                        <rect x="2" y="2" width="20" height="20" rx="5" ry="5" fill="none" stroke="currentColor" strokeWidth="2"/>
+                        <circle cx="12" cy="12" r="3" fill="currentColor"/>
+                        <circle cx="18" cy="6" r="1.5" fill="currentColor"/>
+                      </svg>
+                    )}
+                    {social.name === 'Email' && (
+                      <svg className="w-6 h-6 text-orange-400 group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                      </svg>
+                    )}
+                  </motion.div>
                 </motion.a>
               ))}
             </div>

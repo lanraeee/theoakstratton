@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { useAlert } from '@/contexts/AlertContext'
@@ -24,16 +24,37 @@ export default function CheckoutPage() {
 
   const plan = location.state?.plan as Plan | undefined
 
+  // Redirect to home if no plan selected after 2 seconds
+  useEffect(() => {
+    if (!plan) {
+      const timer = setTimeout(() => {
+        error('Please select a plan from the pricing section')
+        navigate('/#pricing', { replace: true })
+      }, 2000)
+      return () => clearTimeout(timer)
+    }
+  }, [plan, navigate, error])
+
   if (!plan) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-primary-500 to-secondary-500 flex items-center justify-center">
-        <div className="bg-white rounded-lg p-8 text-center max-w-md">
-          <h1 className="text-2xl font-bold text-dark mb-4">No Plan Selected</h1>
-          <p className="text-gray-600 mb-6">Please select a plan from the pricing section first.</p>
-          <button onClick={() => navigate('/')} className="btn btn-primary">
-            Back to Pricing
-          </button>
-        </div>
+      <div className="min-h-screen bg-gradient-to-br from-primary-500 to-secondary-500 flex items-center justify-center p-4">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="bg-white rounded-lg p-8 text-center max-w-md shadow-2xl"
+        >
+          <h1 className="text-3xl font-bold text-dark mb-2">📋 Select a Plan</h1>
+          <p className="text-gray-600 mb-6">Please choose a pricing plan first to continue with checkout.</p>
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => navigate('/#pricing', { replace: true })}
+            className="btn btn-primary w-full"
+          >
+            ← Back to Pricing
+          </motion.button>
+          <p className="text-xs text-gray-400 mt-4">Redirecting in 2 seconds...</p>
+        </motion.div>
       </div>
     )
   }

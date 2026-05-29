@@ -24,12 +24,30 @@ const DEFAULT_BRANDING: BrandingData = {
   faviconUrl: '',
 }
 
-const setFavicon = (url: string) => {
+const setFaviconGlobally = (url: string) => {
   if (!url) return
-  const link = document.querySelector("link[rel*='icon']") as HTMLLinkElement
+
+  // Update existing favicon link
+  let link = document.querySelector("link[rel*='icon']") as HTMLLinkElement
   if (link) {
     link.href = url
-    link.type = url.endsWith('.svg') ? 'image/svg+xml' : 'image/x-icon'
+  } else {
+    // Create new favicon link if it doesn't exist
+    link = document.createElement('link')
+    link.rel = 'icon'
+    link.href = url
+    document.head.appendChild(link)
+  }
+
+  // Also update apple-touch-icon for iOS
+  let appleLink = document.querySelector("link[rel='apple-touch-icon']") as HTMLLinkElement
+  if (!appleLink) {
+    appleLink = document.createElement('link')
+    appleLink.rel = 'apple-touch-icon'
+    appleLink.href = url
+    document.head.appendChild(appleLink)
+  } else {
+    appleLink.href = url
   }
 }
 
@@ -57,7 +75,7 @@ export function BrandingProvider({ children }: { children: ReactNode }) {
           }
           setBranding(brandingObj)
           if (brandingObj.faviconUrl) {
-            setFavicon(brandingObj.faviconUrl)
+            setFaviconGlobally(brandingObj.faviconUrl)
           }
         } catch (e) {
           console.error('Failed to parse branding:', e)
@@ -81,7 +99,7 @@ export function BrandingProvider({ children }: { children: ReactNode }) {
   const updateBranding = useCallback(async (data: BrandingData) => {
     setBranding(data)
     if (data.faviconUrl) {
-      setFavicon(data.faviconUrl)
+      setFaviconGlobally(data.faviconUrl)
     }
   }, [])
 

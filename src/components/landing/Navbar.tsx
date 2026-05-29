@@ -71,10 +71,7 @@ export default function Navbar() {
           {branding.logoType === 'image' && branding.logoUrl ? (
             <img src={branding.logoUrl} alt="Logo" className="h-8 object-contain" />
           ) : (
-            <>
-              <div className="text-2xl font-bold text-gradient">{branding.logoText}</div>
-              <div className="text-xs text-secondary-500">BNPL Solutions</div>
-            </>
+            <div className="text-2xl font-bold text-gradient">{branding.logoText}</div>
           )}
         </motion.div>
 

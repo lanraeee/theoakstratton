@@ -1050,8 +1050,19 @@ app.post('/api/checkout/create-session', formLimiter, async (req, res) => {
       return res.status(503).json({ error: 'Database not available' })
     }
   } catch (error) {
-    console.error('Create session error:', error)
-    res.status(500).json({ error: 'Failed to create checkout session' })
+    console.error('Create session error:', error.message || error)
+
+    if (!process.env.STRIPE_SECRET_KEY) {
+      return res.status(503).json({
+        error: 'Stripe is not configured. Please set STRIPE_SECRET_KEY environment variable.'
+      })
+    }
+
+    res.status(500).json({
+      error: error.message?.includes('API')
+        ? 'Stripe API error. Please check your Stripe configuration.'
+        : 'Failed to create checkout session'
+    })
   }
 })
 
@@ -1885,6 +1896,7 @@ app.listen(PORT, () => {
     console.log(`⚠️  Database: Not configured (DATABASE_URL not set)`)
   }
   console.log(`📧 SMTP: ${process.env.SMTP_USER ? 'Configured' : 'Not configured'}`)
+  console.log(`💳 Stripe: ${process.env.STRIPE_SECRET_KEY ? 'Configured' : '⚠️  Not configured (STRIPE_SECRET_KEY not set)'}`)
   console.log(`🌐 CORS Origin: ${process.env.CORS_ORIGIN || 'All origins'}`)
   console.log(`📦 Environment: ${process.env.NODE_ENV || 'development'}\n`)
 })

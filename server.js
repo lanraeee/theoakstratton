@@ -1787,6 +1787,37 @@ app.post('/api/admin/clear-analytics', authenticateToken, async (req, res) => {
   }
 })
 
+// Clear all demo data at once
+app.post('/api/admin/clear-all-data', authenticateToken, async (req, res) => {
+  try {
+    if (!req.user || req.user.role !== 'admin') {
+      return res.status(403).json({ error: 'Unauthorized' })
+    }
+
+    const tables = ['leads', 'analytics_events', 'email_events', 'orders', 'transactions', 'testimonials']
+    const cleared = []
+
+    for (const table of tables) {
+      try {
+        await pool.query(`DELETE FROM ${table}`)
+        cleared.push(table)
+        console.log(`✓ Cleared ${table}`)
+      } catch (err) {
+        console.warn(`⚠️ Could not clear ${table}:`, err.message)
+      }
+    }
+
+    res.json({
+      success: true,
+      message: `Cleared ${cleared.length} tables`,
+      cleared: cleared,
+    })
+  } catch (error) {
+    console.error('Clear all data error:', error)
+    res.status(500).json({ error: 'Failed to clear data' })
+  }
+})
+
 // ============================================================================
 // FILE UPLOAD ENDPOINTS
 // ============================================================================

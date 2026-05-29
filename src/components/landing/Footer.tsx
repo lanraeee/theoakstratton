@@ -126,8 +126,8 @@ export default function Footer() {
                     }}
                   >
                     {social.name === 'Twitter' && (
-                      <svg className="w-6 h-6 text-[#1DA1F2] group-hover:text-white transition-colors" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M23 3a10.9 10.9 0 01-3.14 1.53 4.48 4.48 0 00-7.86 3v1A10.66 10.66 0 013 4s-4 9 5 13a11.64 11.64 0 01-7 2s9 5 20 5a9.5 9.5 0 00-9-5.5c4.75 2.25 7-7 7-7a10.6 10.6 0 01-9.8 7C2 15.5-1 8 3 5c3.6 3.1 7 3 7 3a10.9 10.9 0 01-2-10z" />
+                      <svg className="w-6 h-6 text-sky-400 group-hover:text-white transition-colors" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24h-6.654l-5.21-6.817L2.306 21.75H-1.25l7.73-8.835L-2.031 2.25h6.826l4.821 6.379L18.244 2.25zM17.831 19.77h1.634L6.888 4.596H5.117L17.831 19.77z" />
                       </svg>
                     )}
                     {social.name === 'Instagram' && (

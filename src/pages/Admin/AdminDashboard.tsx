@@ -1067,6 +1067,29 @@ function SettingsEditor() {
           {sending ? 'Sending...' : '📧 Send Test Email'}
         </motion.button>
       </div>
+
+      {/* Data Management */}
+      <div className="card p-6 max-w-2xl border-2 border-red-200 bg-red-50">
+        <h2 className="text-2xl font-bold text-dark mb-2">🗑️ Data Management</h2>
+        <p className="text-sm text-gray-600 mb-4">Clear all demo/test data and start with fresh metrics</p>
+        <p className="text-xs text-gray-500 mb-6">This will permanently delete all leads, analytics, email events, orders, and transactions. This action cannot be undone.</p>
+        <motion.button
+          whileHover={{ scale: 1.05 }}
+          onClick={async () => {
+            if (window.confirm('Are you sure you want to clear ALL data? This cannot be undone.')) {
+              try {
+                await api.post('/api/admin/clear-all-data', {})
+                success('All demo data cleared successfully')
+              } catch (err: any) {
+                error(err.response?.data?.error || 'Failed to clear data')
+              }
+            }
+          }}
+          className="btn bg-red-500 hover:bg-red-600 text-white w-full"
+        >
+          🗑️ Clear All Demo Data
+        </motion.button>
+      </div>
     </motion.div>
   )
 }

@@ -32,6 +32,16 @@ export default function Footer() {
 
   useEffect(() => {
     fetchFooterContent()
+
+    // Refetch footer content when page becomes visible (user returns from admin dashboard)
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        fetchFooterContent()
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange)
   }, [])
 
   const fetchFooterContent = async () => {

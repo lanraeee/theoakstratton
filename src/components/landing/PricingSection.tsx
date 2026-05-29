@@ -15,7 +15,7 @@ const defaultPlans: Plan[] = [
   {
     id: 'starter',
     name: 'Starter',
-    price_gbp: 299,
+    price_gbp: 29900,
     description: 'One-time setup fee',
     features: [
       'Provider recommendation',
@@ -27,7 +27,7 @@ const defaultPlans: Plan[] = [
   {
     id: 'growth',
     name: 'Growth',
-    price_gbp: 599,
+    price_gbp: 59900,
     description: 'One-time setup fee',
     features: [
       '2-3 provider setup',
@@ -41,7 +41,7 @@ const defaultPlans: Plan[] = [
   {
     id: 'premium',
     name: 'Premium',
-    price_gbp: 1199,
+    price_gbp: 119900,
     description: 'Full BNPL stack',
     features: [
       'Full provider setup (3+)',

@@ -941,7 +941,7 @@ app.get('/api/plans', async (req, res) => {
 
 app.post('/api/checkout/create-session', formLimiter, async (req, res) => {
   try {
-    const { planId, email, name } = req.body
+    const { planId, planName, price_gbp, email, name } = req.body
 
     if (!planId || !email || !name) {
       return res.status(400).json({ error: 'Plan ID, email, and name required' })
@@ -951,8 +951,53 @@ app.post('/api/checkout/create-session', formLimiter, async (req, res) => {
       return res.status(400).json({ error: 'Invalid email format' })
     }
 
+    // If price_gbp is provided from frontend, use it directly (this is the source of truth)
+    if (price_gbp && typeof price_gbp === 'number' && price_gbp > 0) {
+      const orderNumber = `ORD-${Date.now()}`
+
+      const session = await stripeClient.checkout.sessions.create({
+        payment_method_types: ['card', 'klarna', 'afterpay_clearpay', 'paypal'],
+        line_items: [
+          {
+            price_data: {
+              currency: 'gbp',
+              product_data: {
+                name: planName || planId,
+              },
+              unit_amount: Math.round(price_gbp * 100),
+            },
+            quantity: 1,
+          },
+        ],
+        mode: 'payment',
+        success_url: `${process.env.CLIENT_URL || 'http://localhost:3000'}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${process.env.CLIENT_URL || 'http://localhost:3000'}/checkout/cancel`,
+        customer_email: email,
+        metadata: {
+          order_number: orderNumber,
+          plan_id: planId,
+          customer_name: name,
+        },
+      })
+
+      // Store order if database is available
+      if (databaseAvailable) {
+        try {
+          await pool.query(
+            'INSERT INTO orders (order_number, customer_email, customer_name, plan_id, amount_gbp, stripe_session_id, status) VALUES ($1, $2, $3, $4, $5, $6, $7)',
+            [orderNumber, email, name, planId, price_gbp, session.id, 'pending']
+          )
+        } catch (dbErr) {
+          console.warn('Failed to store order:', dbErr.message)
+          // Continue even if order storage fails
+        }
+      }
+
+      return res.json({ sessionId: session.id, url: session.url })
+    }
+
+    // Fallback: try to look up plan from database if price not provided
     if (databaseAvailable) {
-      // Try to find plan by ID, but fall back to name if ID is a string (UUID mismatch)
       let planResult = { rows: [] }
 
       try {
@@ -979,7 +1024,6 @@ app.post('/api/checkout/create-session', formLimiter, async (req, res) => {
 
         // Use default plan data
         const plan = { id: defaultPlan.id, name: defaultPlan.name, price_gbp: defaultPlan.price_gbp, stripe_price_id: null }
-        const stripePrice = plan.stripe_price_id || (plan.price_gbp * 100).toString()
         const orderNumber = `ORD-${Date.now()}`
 
         const session = await stripeClient.checkout.sessions.create({
@@ -1007,11 +1051,19 @@ app.post('/api/checkout/create-session', formLimiter, async (req, res) => {
           },
         })
 
+        try {
+          await pool.query(
+            'INSERT INTO orders (order_number, customer_email, customer_name, plan_id, amount_gbp, stripe_session_id, status) VALUES ($1, $2, $3, $4, $5, $6, $7)',
+            [orderNumber, email, name, planId, plan.price_gbp, session.id, 'pending']
+          )
+        } catch (dbErr) {
+          console.warn('Failed to store order:', dbErr.message)
+        }
+
         return res.json({ sessionId: session.id, url: session.url })
       }
 
       const plan = planResult.rows[0]
-      const stripePrice = plan.stripe_price_id || (plan.price_gbp * 100).toString()
       const orderNumber = `ORD-${Date.now()}`
 
       const session = await stripeClient.checkout.sessions.create({
@@ -1040,10 +1092,14 @@ app.post('/api/checkout/create-session', formLimiter, async (req, res) => {
       })
 
       // Store order
-      await pool.query(
-        'INSERT INTO orders (order_number, customer_email, customer_name, plan_id, amount_gbp, stripe_session_id, status) VALUES ($1, $2, $3, $4, $5, $6, $7)',
-        [orderNumber, email, name, planId, plan.price_gbp, session.id, 'pending']
-      )
+      try {
+        await pool.query(
+          'INSERT INTO orders (order_number, customer_email, customer_name, plan_id, amount_gbp, stripe_session_id, status) VALUES ($1, $2, $3, $4, $5, $6, $7)',
+          [orderNumber, email, name, planId, plan.price_gbp, session.id, 'pending']
+        )
+      } catch (dbErr) {
+        console.warn('Failed to store order:', dbErr.message)
+      }
 
       return res.json({ sessionId: session.id, url: session.url })
     } else {

@@ -991,7 +991,7 @@ app.post('/api/checkout/create-session', formLimiter, async (req, res) => {
                 product_data: {
                   name: plan.name,
                 },
-                unit_amount: plan.price_gbp,
+                unit_amount: Math.round(plan.price_gbp * 100),
               },
               quantity: 1,
             },
@@ -1023,7 +1023,7 @@ app.post('/api/checkout/create-session', formLimiter, async (req, res) => {
               product_data: {
                 name: plan.name,
               },
-              unit_amount: plan.price_gbp,
+              unit_amount: Math.round(plan.price_gbp * 100),
             },
             quantity: 1,
           },

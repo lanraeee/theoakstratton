@@ -747,7 +747,7 @@ app.post('/api/admin/send-response/:leadId', authenticateToken, async (req, res)
       // For now, just save the message and update status
       await pool.query(
         'UPDATE leads SET status = $1, notes = $2 WHERE id = $3',
-        ['contacted', (message || '').substring(0, 1000)]
+        ['contacted', (message || '').substring(0, 1000), leadId]
       )
 
       res.json({ success: true, message: 'Response sent successfully' })

@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
+import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react'
 import api from '@/services/api'
 
 interface BrandingData {
@@ -10,8 +10,9 @@ interface BrandingData {
 
 interface BrandingContextType {
   branding: BrandingData
-  updateBranding: (data: BrandingData) => void
+  updateBranding: (data: BrandingData) => Promise<void>
   loading: boolean
+  refetch: () => Promise<void>
 }
 
 const BrandingContext = createContext<BrandingContextType | undefined>(undefined)
@@ -23,56 +24,64 @@ const DEFAULT_BRANDING: BrandingData = {
   faviconUrl: '',
 }
 
+const setFavicon = (url: string) => {
+  if (!url) return
+  const link = document.querySelector("link[rel*='icon']") as HTMLLinkElement
+  if (link) {
+    link.href = url
+    link.type = url.endsWith('.svg') ? 'image/svg+xml' : 'image/x-icon'
+  }
+}
+
 export function BrandingProvider({ children }: { children: ReactNode }) {
   const [branding, setBranding] = useState<BrandingData>(DEFAULT_BRANDING)
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    fetchBranding()
-  }, [])
-
-  const fetchBranding = async () => {
+  const fetchBranding = useCallback(async () => {
     try {
+      setLoading(true)
       const response = await api.get('/api/landing-content')
-      if (response.data.branding) {
+      if (response.data?.branding) {
         try {
           const parsed = JSON.parse(response.data.branding)
-          setBranding(parsed)
-          if (parsed.faviconUrl) {
-            setFavicon(parsed.faviconUrl)
+          const brandingData: BrandingData = {
+            logoType: parsed.logoType || 'text',
+            logoText: parsed.logoText || 'Oakstratton',
+            logoUrl: parsed.logoUrl || '',
+            faviconUrl: parsed.faviconUrl || '',
+          }
+          setBranding(brandingData)
+          if (brandingData.faviconUrl) {
+            setFavicon(brandingData.faviconUrl)
           }
         } catch (e) {
+          console.error('Failed to parse branding:', e)
           setBranding(DEFAULT_BRANDING)
         }
+      } else {
+        setBranding(DEFAULT_BRANDING)
       }
     } catch (err) {
       console.error('Failed to fetch branding:', err)
+      setBranding(DEFAULT_BRANDING)
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
 
-  const setFavicon = (url: string) => {
-    const link = document.querySelector("link[rel*='icon']") as HTMLLinkElement
-    if (link) {
-      link.href = url
-    } else {
-      const newLink = document.createElement('link')
-      newLink.rel = 'icon'
-      newLink.href = url
-      document.head.appendChild(newLink)
-    }
-  }
+  useEffect(() => {
+    fetchBranding()
+  }, [fetchBranding])
 
-  const updateBranding = (data: BrandingData) => {
+  const updateBranding = useCallback(async (data: BrandingData) => {
     setBranding(data)
     if (data.faviconUrl) {
       setFavicon(data.faviconUrl)
     }
-  }
+  }, [])
 
   return (
-    <BrandingContext.Provider value={{ branding, updateBranding, loading }}>
+    <BrandingContext.Provider value={{ branding, updateBranding, loading, refetch: fetchBranding }}>
       {children}
     </BrandingContext.Provider>
   )

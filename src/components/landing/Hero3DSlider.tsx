@@ -239,28 +239,6 @@ export default function Hero3DSlider() {
               })}
             </motion.div>
 
-            {/* CTA Buttons */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.8, duration: 0.6 }}
-              className="flex flex-col md:flex-row gap-4 justify-center"
-            >
-              <motion.button
-                whileHover={{ scale: 1.05, boxShadow: '0 20px 40px rgba(0,0,0,0.2)' }}
-                whileTap={{ scale: 0.95 }}
-                className="btn btn-primary btn-lg bg-white text-primary-500 hover:bg-gray-100"
-              >
-                Get Early Access
-              </motion.button>
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="btn btn-lg border-2 border-white text-white hover:bg-white/10"
-              >
-                Schedule Demo
-              </motion.button>
-            </motion.div>
           </motion.div>
         </AnimatePresence>
 

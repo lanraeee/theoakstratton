@@ -13,11 +13,27 @@ interface NavLink {
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false)
   const [navLinks, setNavLinks] = useState<NavLink[]>([
+    { label: 'Hero', href: '#hero' },
     { label: 'Features', href: '#features' },
+    { label: 'Providers', href: '#providers' },
     { label: 'Pricing', href: '#pricing' },
+    { label: 'Testimonials', href: '#testimonials' },
+    { label: 'Waitlist', href: '#waitlist' },
     { label: 'Contact', href: '#contact' },
   ])
   const navigate = useNavigate()
+
+  const handleNavClick = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
+    if (href.startsWith('#')) {
+      e.preventDefault()
+      const sectionId = href.slice(1)
+      const element = document.getElementById(sectionId)
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth' })
+        setIsOpen(false)
+      }
+    }
+  }
 
   useEffect(() => {
     const fetchNavMenu = async () => {
@@ -60,8 +76,9 @@ export default function Navbar() {
             <motion.a
               key={link.label}
               href={link.href}
+              onClick={(e) => handleNavClick(e, link.href)}
               whileHover={{ color: '#005EB8' }}
-              className="text-gray-600 hover:text-primary-500 transition-colors font-medium"
+              className="text-gray-600 hover:text-primary-500 transition-colors font-medium cursor-pointer"
             >
               {link.label}
             </motion.a>
@@ -90,8 +107,8 @@ export default function Navbar() {
               <a
                 key={link.label}
                 href={link.href}
-                className="block text-gray-600 hover:text-primary-500 font-medium py-2"
-                onClick={() => setIsOpen(false)}
+                className="block text-gray-600 hover:text-primary-500 font-medium py-2 cursor-pointer"
+                onClick={(e) => handleNavClick(e, link.href)}
               >
                 {link.label}
               </a>

@@ -145,7 +145,7 @@ export default function Hero3DSlider() {
   }
 
   return (
-    <section className="relative min-h-screen pt-20 overflow-hidden">
+    <section id="hero" className="relative min-h-screen pt-20 overflow-hidden">
       {/* Animated Background */}
       <div className="absolute inset-0">
         <motion.div

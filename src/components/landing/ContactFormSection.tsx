@@ -35,7 +35,7 @@ export default function ContactFormSection() {
   }
 
   return (
-    <section className="py-20 bg-light">
+    <section id="contact" className="py-20 bg-light">
       <div className="container">
         <motion.div
           initial={{ opacity: 0, y: 40 }}

@@ -29,11 +29,18 @@ const PORT = process.env.PORT || 3000
 // Initialize Stripe
 const stripeClient = stripe(process.env.STRIPE_SECRET_KEY || '')
 
-// Initialize Qwen AI client (OpenAI-compatible DashScope API)
-const qwenClient = new OpenAI({
-  apiKey: process.env.QWEN_API_KEY || '',
-  baseURL: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
-})
+// Qwen AI client — created lazily so the server starts without QWEN_API_KEY set
+let _qwenClient = null
+function getQwenClient() {
+  if (!process.env.QWEN_API_KEY) return null
+  if (!_qwenClient) {
+    _qwenClient = new OpenAI({
+      apiKey: process.env.QWEN_API_KEY,
+      baseURL: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
+    })
+  }
+  return _qwenClient
+}
 
 // Initialize PostgreSQL client
 const pool = new pg.Pool({
@@ -541,7 +548,8 @@ Rules:
 
 app.post('/api/chat', chatLimiter, async (req, res) => {
   try {
-    if (!process.env.QWEN_API_KEY) {
+    const qwenClient = getQwenClient()
+    if (!qwenClient) {
       return res.status(503).json({ error: 'AI chat is not currently configured.' })
     }
 

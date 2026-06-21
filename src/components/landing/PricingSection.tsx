@@ -15,7 +15,7 @@ const defaultPlans: Plan[] = [
   {
     id: 'starter',
     name: 'Starter',
-    price_gbp: 299,
+    price_gbp: 599,
     description: 'One-time setup fee',
     features: [
       'Provider recommendation',

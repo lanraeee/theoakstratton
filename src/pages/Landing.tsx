@@ -7,6 +7,7 @@ import WaitlistSection from '@/components/landing/WaitlistSection'
 import TestimonialsSection from '@/components/landing/TestimonialsSection'
 import ContactFormSection from '@/components/landing/ContactFormSection'
 import Footer from '@/components/landing/Footer'
+import ChatWidget from '@/components/landing/ChatWidget'
 
 export default function LandingPage() {
   return (
@@ -20,6 +21,7 @@ export default function LandingPage() {
       <TestimonialsSection />
       <ContactFormSection />
       <Footer />
+      <ChatWidget />
     </div>
   )
 }

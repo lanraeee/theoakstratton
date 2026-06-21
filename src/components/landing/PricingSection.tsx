@@ -19,23 +19,9 @@ const defaultPlans: Plan[] = [
     description: 'One-time setup fee',
     features: [
       'Provider recommendation',
-      'One provider setup',
+      'Single BNPL plan setup',
       'Staff training (30 min)',
-      '30-day support',
-    ],
-  },
-  {
-    id: 'growth',
-    name: 'Growth',
-    price_gbp: 599,
-    description: 'One-time setup fee',
-    features: [
-      '2-3 provider setup',
-      'A/B test optimization',
-      'Analytics setup',
-      '90-day support',
-      '1 check-in call',
-      'Performance review',
+      '30-day post-launch support',
     ],
   },
   {
@@ -44,12 +30,12 @@ const defaultPlans: Plan[] = [
     price_gbp: 1199,
     description: 'Full BNPL stack',
     features: [
-      'Full provider setup (3+)',
-      'Custom checkout optimization',
+      'Full multi-plan setup (3+)',
+      'Custom checkout optimisation',
+      'A/B testing & analytics',
       'Monthly performance reviews',
-      'Priority 24/7 support',
       'Dedicated account manager',
-      'Advanced analytics',
+      'Priority 24/7 support',
     ],
   },
 ]
@@ -108,8 +94,8 @@ export default function PricingSection() {
       <section id="pricing" className="py-20 bg-light">
         <div className="container text-center">
           <div className="animate-pulse h-20 bg-gray-300 rounded mb-4"></div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-            {[1, 2, 3].map((i) => (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 max-w-3xl mx-auto">
+            {[1, 2].map((i) => (
               <div key={i} className="h-96 bg-gray-200 rounded-lg animate-pulse"></div>
             ))}
           </div>
@@ -141,7 +127,7 @@ export default function PricingSection() {
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true }}
-          className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto"
+          className="grid grid-cols-1 sm:grid-cols-2 gap-8 max-w-3xl mx-auto"
         >
           {plans.map((plan, idx) => (
             <motion.div
@@ -153,7 +139,7 @@ export default function PricingSection() {
               }}
               className={`card relative transition-all ${
                 idx === 1
-                  ? 'border-2 border-primary-500 shadow-lg scale-105 md:scale-100 md:md:scale-110'
+                  ? 'border-2 border-primary-500 shadow-lg'
                   : 'border-2 border-gray-200'
               }`}
             >
@@ -231,7 +217,7 @@ export default function PricingSection() {
               },
               {
                 q: 'What about ongoing fees?',
-                a: 'Only the Growth and Premium plans have ongoing fees. Starter is one-time only.',
+                a: 'Starter is a one-time setup fee. Premium includes ongoing monthly support and reviews.',
               },
             ].map((faq, idx) => (
               <motion.div

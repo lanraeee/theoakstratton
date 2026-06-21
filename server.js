@@ -4,7 +4,6 @@ import bodyParser from 'body-parser'
 import helmet from 'helmet'
 import rateLimit from 'express-rate-limit'
 import stripe from 'stripe'
-import axios from 'axios'
 import validator from 'validator'
 import jwt from 'jsonwebtoken'
 import bcryptjs from 'bcryptjs'
@@ -14,6 +13,7 @@ import fs from 'fs'
 import { fileURLToPath } from 'url'
 import { createRequire } from 'module'
 import dotenv from 'dotenv'
+import OpenAI from 'openai'
 
 const require = createRequire(import.meta.url)
 const multer = require('multer')
@@ -28,6 +28,12 @@ const PORT = process.env.PORT || 3000
 
 // Initialize Stripe
 const stripeClient = stripe(process.env.STRIPE_SECRET_KEY || '')
+
+// Initialize Qwen AI client (OpenAI-compatible DashScope API)
+const qwenClient = new OpenAI({
+  apiKey: process.env.QWEN_API_KEY || '',
+  baseURL: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
+})
 
 // Initialize PostgreSQL client
 const pool = new pg.Pool({
@@ -478,7 +484,7 @@ if (!process.env.JWT_REFRESH_SECRET) {
   console.warn('⚠️  WARNING: JWT_REFRESH_SECRET is not set — using insecure default. Set this in production!')
 }
 
-const isLocalRequest = (req: { ip: string }) =>
+const isLocalRequest = (req) =>
   process.env.NODE_ENV !== 'production' &&
   (req.ip === '127.0.0.1' || req.ip === '::1' || req.ip === 'localhost')
 
@@ -504,7 +510,67 @@ const formLimiter = rateLimit({
   skip: isLocalRequest,
 })
 
+const chatLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 15,
+  message: 'Too many chat messages, please wait a moment.',
+  skip: isLocalRequest,
+})
+
 app.use('/api/', apiLimiter)
+
+// ============================================================================
+// QWEN AI CHAT ENDPOINT
+// ============================================================================
+
+const CHAT_SYSTEM_PROMPT = `You are a helpful assistant for Oakstratton, a BNPL (Buy Now Pay Later) setup service that helps businesses offer payment plans to their customers.
+
+Your role: help visitors understand BNPL, what plans are available, and how Oakstratton can help their business grow.
+
+Key facts:
+- Oakstratton sets up BNPL payment plans for businesses — merchants get paid immediately with zero credit risk
+- Plan types available: Pay in 4 (0% interest), Monthly Instalments (3–12 months), Extended Finance (12–24 months), Flexible Credit
+- Average results: +30% conversion rate, +40% average order value, 7-day setup time
+- Pricing: Starter £299 (one provider, 30-day support), Premium £1199 (full setup, dedicated manager, ongoing support)
+
+Rules:
+- Keep answers to 2–4 sentences max
+- Do not mention or compare specific third-party BNPL provider names
+- For detailed questions or to get started, direct users to the contact form or pricing section on this page
+- Stay on topic — politely redirect off-topic questions back to BNPL and Oakstratton`
+
+app.post('/api/chat', chatLimiter, async (req, res) => {
+  try {
+    if (!process.env.QWEN_API_KEY) {
+      return res.status(503).json({ error: 'AI chat is not currently configured.' })
+    }
+
+    const { messages } = req.body
+
+    if (!Array.isArray(messages) || messages.length === 0) {
+      return res.status(400).json({ error: 'Messages array is required.' })
+    }
+
+    const sanitized = messages
+      .filter((m) => m.role === 'user' || m.role === 'assistant')
+      .slice(-10)
+      .map((m) => ({ role: m.role, content: validateInput(String(m.content), 1000) || '' }))
+      .filter((m) => m.content.length > 0)
+
+    const completion = await qwenClient.chat.completions.create({
+      model: process.env.QWEN_MODEL || 'qwen-turbo',
+      messages: [{ role: 'system', content: CHAT_SYSTEM_PROMPT }, ...sanitized],
+      max_tokens: 300,
+      temperature: 0.7,
+    })
+
+    const reply = completion.choices[0]?.message?.content?.trim() || 'Sorry, I could not generate a response right now.'
+    res.json({ reply })
+  } catch (error) {
+    console.error('Qwen chat error:', error?.message || error)
+    res.status(500).json({ error: 'Chat service temporarily unavailable.' })
+  }
+})
 
 // ============================================================================
 // EMAIL FUNCTIONALITY DISABLED

@@ -314,15 +314,43 @@ See `database/schema.sql` for the complete schema.
 
 ## 🚢 Deployment
 
-### Railway Deployment
+### Deployment Options
+
+Choose one of the following platforms:
+
+#### 🚂 Railway Deployment (Recommended for Full-Stack)
 
 For detailed deployment instructions, see [DEPLOYMENT.md](./DEPLOYMENT.md).
 
+**Advantages:**
+- Includes managed PostgreSQL database
+- Simple one-click deployment
+- Great for full-stack applications
+- Free tier available
+
 Quick start:
 1. Connect GitHub repository to Railway
-2. Add PostgreSQL service
+2. PostgreSQL service is automatically added
 3. Set environment variables
 4. Deploy
+
+#### ▲ Vercel Deployment (Recommended for Frontend-First)
+
+For detailed deployment instructions, see [VERCEL_DEPLOYMENT.md](./VERCEL_DEPLOYMENT.md).
+
+**Advantages:**
+- Optimized for frontend performance
+- Pay-per-use pricing
+- Excellent developer experience
+- Requires external database (Railway, Neon, Supabase)
+
+Quick start:
+1. Set up PostgreSQL database with external provider
+2. Connect GitHub repository to Vercel
+3. Set environment variables
+4. Deploy
+
+### Build and Run
 
 ```bash
 # Build for production

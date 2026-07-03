@@ -1,0 +1,67 @@
+{
+  "version": 2,
+  "buildCommand": "npm run build",
+  "env": {
+    "DATABASE_URL": {
+      "description": "PostgreSQL database connection string"
+    },
+    "JWT_SECRET": {
+      "description": "Secret key for signing JWT tokens (min 32 characters)"
+    },
+    "JWT_REFRESH_SECRET": {
+      "description": "Secret key for signing JWT refresh tokens (min 32 characters)"
+    },
+    "NODE_ENV": {
+      "default": "production"
+    },
+    "PORT": {
+      "default": "3000"
+    },
+    "VITE_API_URL": {
+      "description": "API URL for frontend (should match the deployed backend URL)"
+    },
+    "API_URL": {
+      "description": "Backend API URL for server"
+    },
+    "CORS_ORIGIN": {
+      "description": "Comma-separated list of allowed CORS origins"
+    },
+    "SMTP_HOST": {
+      "description": "Email SMTP server hostname (optional)"
+    },
+    "SMTP_PORT": {
+      "description": "Email SMTP server port (optional, default: 587)"
+    },
+    "SMTP_USER": {
+      "description": "Email SMTP username (optional)"
+    },
+    "SMTP_PASS": {
+      "description": "Email SMTP password (optional)"
+    },
+    "ADMIN_EMAIL": {
+      "description": "Admin email for notifications (optional)"
+    },
+    "STRIPE_PUBLIC_KEY": {
+      "description": "Stripe publishable key (optional)"
+    },
+    "STRIPE_SECRET_KEY": {
+      "description": "Stripe secret key (optional)"
+    },
+    "STRIPE_WEBHOOK_SECRET": {
+      "description": "Stripe webhook secret (optional)"
+    },
+    "QWEN_API_KEY": {
+      "description": "Qwen AI API key for Aliyun (optional)"
+    },
+    "SEED_DEMO_DATA": {
+      "default": "false",
+      "description": "Set to 'true' to seed demo data on deployment"
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "/server.js"
+    }
+  ]
+}

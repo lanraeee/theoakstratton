@@ -41,6 +41,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     { label: 'Email Tracking', icon: '📬', path: '/admin/email-tracking' },
     { label: 'Analytics', icon: '📈', path: '/admin/analytics' },
     { label: 'Reporting', icon: '📑', path: '/admin/reporting' },
+    { label: 'Vercel Logs', icon: '🚀', path: '/admin/vercel-logs' },
     { label: 'Settings', icon: '⚙️', path: '/admin/settings' },
   ]
 

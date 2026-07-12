@@ -26,6 +26,7 @@ import EmailTemplatesPage from './pages/Admin/EmailTemplatesPage'
 import EmailCampaignsPage from './pages/Admin/EmailCampaignsPage'
 import NavMenuManagementPage from './pages/Admin/NavMenuManagementPage'
 import AdminDashboard from './pages/Admin/AdminDashboard'
+import VercelLogsPage from './pages/Admin/VercelLogsPage'
 import NotFoundPage from './pages/NotFound'
 
 function App() {
@@ -153,6 +154,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <ReportingPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/vercel-logs"
+              element={
+                <ProtectedRoute>
+                  <VercelLogsPage />
                 </ProtectedRoute>
               }
             />

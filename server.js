@@ -2351,9 +2351,22 @@ app.get('/api/health', (req, res) => {
 // ============================================================================
 
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'dist', 'index.html'), (err) => {
+  const distFile = path.join(__dirname, 'dist', 'index.html')
+  const publicFile = path.join(__dirname, 'public', 'index.html')
+
+  res.sendFile(distFile, (err) => {
     if (err) {
-      res.sendFile(path.join(__dirname, 'public', 'index.html'))
+      // Only serve public/index.html as fallback for non-admin routes
+      if (req.path.startsWith('/admin')) {
+        // Admin routes require the React app, so if dist doesn't exist, return 503
+        return res.status(503).json({ error: 'Application not properly built. Please rebuild with: npm run build' })
+      }
+      // Fall back to public/index.html for other routes
+      res.sendFile(publicFile, (fallbackErr) => {
+        if (fallbackErr) {
+          res.status(404).json({ error: 'Not Found' })
+        }
+      })
     }
   })
 })

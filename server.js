@@ -415,7 +415,7 @@ app.use(
     origin: process.env.CORS_ORIGIN
       ? process.env.CORS_ORIGIN.split(',').map((o) => o.trim())
       : process.env.NODE_ENV === 'production'
-        ? false
+        ? ['https://oakstratton.belloite.com', 'https://www.oakstratton.belloite.com', /vercel\.app$/]
         : true,
     credentials: true,
   })

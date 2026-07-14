@@ -14,6 +14,7 @@ import { fileURLToPath } from 'url'
 import { createRequire } from 'module'
 import dotenv from 'dotenv'
 import OpenAI from 'openai'
+import axios from 'axios'
 
 const require = createRequire(import.meta.url)
 const multer = require('multer')
@@ -2335,6 +2336,130 @@ app.post('/api/admin/upload-asset', authenticateToken, uploadMiddleware.single('
   } catch (error) {
     console.error('Upload asset error:', error)
     res.status(500).json({ error: error.message || 'Failed to upload asset' })
+  }
+})
+
+// ============================================================================
+// VERCEL API ENDPOINTS
+// ============================================================================
+
+app.get('/api/vercel/deployments', authenticateToken, async (req, res) => {
+  try {
+    if (!req.user || req.user.role !== 'admin') {
+      return res.status(403).json({ error: 'Unauthorized' })
+    }
+
+    const vercelToken = process.env.VERCEL_API_TOKEN
+    if (!vercelToken) {
+      return res.status(400).json({ error: 'Vercel API token not configured' })
+    }
+
+    const projectName = req.query.project || 'oakstratton'
+
+    const response = await axios.get(
+      `https://api.vercel.com/v6/deployments`,
+      {
+        headers: {
+          Authorization: `Bearer ${vercelToken}`,
+        },
+        params: {
+          projectName,
+          limit: 10,
+        },
+      }
+    )
+
+    res.json({
+      success: true,
+      deployments: response.data.deployments || [],
+      pagination: response.data.pagination,
+    })
+  } catch (error) {
+    console.error('Vercel deployments error:', error.message)
+    res.status(500).json({ error: error.message || 'Failed to fetch deployments' })
+  }
+})
+
+app.get('/api/vercel/logs/:deploymentId', authenticateToken, async (req, res) => {
+  try {
+    if (!req.user || req.user.role !== 'admin') {
+      return res.status(403).json({ error: 'Unauthorized' })
+    }
+
+    const vercelToken = process.env.VERCEL_API_TOKEN
+    if (!vercelToken) {
+      return res.status(400).json({ error: 'Vercel API token not configured' })
+    }
+
+    const { deploymentId } = req.params
+    if (!deploymentId) {
+      return res.status(400).json({ error: 'Deployment ID required' })
+    }
+
+    const response = await axios.get(
+      `https://api.vercel.com/v12/deployments/${deploymentId}/builds`,
+      {
+        headers: {
+          Authorization: `Bearer ${vercelToken}`,
+        },
+      }
+    )
+
+    res.json({
+      success: true,
+      builds: response.data.builds || [],
+    })
+  } catch (error) {
+    console.error('Vercel logs error:', error.message)
+    res.status(500).json({ error: error.message || 'Failed to fetch logs' })
+  }
+})
+
+app.get('/api/vercel/project-logs', authenticateToken, async (req, res) => {
+  try {
+    if (!req.user || req.user.role !== 'admin') {
+      return res.status(403).json({ error: 'Unauthorized' })
+    }
+
+    const vercelToken = process.env.VERCEL_API_TOKEN
+    if (!vercelToken) {
+      return res.status(400).json({ error: 'Vercel API token not configured' })
+    }
+
+    const domain = req.query.domain || 'oakstratton.belloite.com'
+    const logType = req.query.type || 'build' // 'build', 'runtime', or 'edge'
+
+    try {
+      const response = await axios.get(
+        `https://api.vercel.com/v6/deployments`,
+        {
+          headers: {
+            Authorization: `Bearer ${vercelToken}`,
+          },
+          params: {
+            limit: 50,
+          },
+        }
+      )
+
+      const deployments = response.data.deployments || []
+      const relevantDeployments = deployments.filter((d) =>
+        d.url === domain || d.url.includes(domain)
+      )
+
+      res.json({
+        success: true,
+        domain,
+        deployments: relevantDeployments.slice(0, 10),
+        totalFound: relevantDeployments.length,
+      })
+    } catch (error) {
+      console.error('Vercel project logs error:', error.message)
+      res.status(500).json({ error: error.message || 'Failed to fetch project logs' })
+    }
+  } catch (error) {
+    console.error('Vercel project logs error:', error.message)
+    res.status(500).json({ error: error.message || 'Failed to fetch project logs' })
   }
 })
 

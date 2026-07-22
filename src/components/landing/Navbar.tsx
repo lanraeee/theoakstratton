@@ -14,12 +14,10 @@ interface NavLink {
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false)
   const [navLinks, setNavLinks] = useState<NavLink[]>([
-    { label: 'Hero', href: '#hero' },
+    { label: 'Home', href: '#hero' },
     { label: 'Features', href: '#features' },
     { label: 'Providers', href: '#providers' },
     { label: 'Pricing', href: '#pricing' },
-    { label: 'Testimonials', href: '#testimonials' },
-    { label: 'Waitlist', href: '#waitlist' },
     { label: 'Contact', href: '#contact' },
   ])
   const navigate = useNavigate()
